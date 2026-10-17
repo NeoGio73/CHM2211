@@ -27,6 +27,8 @@ Each student is given an unknown compound, by a five-character code at the top o
 
 The structure itself is not checked by the page: the instructor marks it.
 
-A [guide to running the NMR](https://neogio73.github.io/CHM2211/exam1-unknown/guide/how-to-run-the-nmr.pdf) (PDF), linked from the lab page, takes students through every step from making up the sample to processing the spectra, with pictures of the lab itself. Its spectra come from a practice sample, not from any of the unknowns. A prelab review is still to come.
+A [guide to running the NMR](https://neogio73.github.io/CHM2211/exam1-unknown/guide/how-to-run-the-nmr.pdf) (PDF), linked from the lab page, takes students through every step from making up the sample to processing the spectra, with pictures of the lab itself. Its spectra come from a practice sample, not from any of the unknowns.
+
+A [prelab review](https://neogio73.github.io/CHM2211/exam1-unknown/prelab/), also linked from the lab page, covers degrees of unsaturation, why each step at the NMR matters, and how to read ¹H, ¹³C with DEPT-135, IR and mass spectra, with two practice compounds worked from formula to structure and questions to check yourself. Its practice compounds are not among the unknowns.
 
 The spectra are drawn from published data: the NIST Chemistry WebBook, nmrshiftdb2, the Human Metabolome Database, SDBS (National Institute of Advanced Industrial Science and Technology, Japan) as held by those two databases, and the chemical literature.

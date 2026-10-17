@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Exam 1 Unknown: Prelab Review</title>
+  <meta name="description" content="A review before the Exam 1 Unknown lab: degrees of unsaturation, why each step at the NMR matters, how to read 1H and 13C spectra with DEPT-135, IR bands and mass spectra, and two compounds worked from formula to structure.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2317211e'/%3E%3Cpath d='M3 25 H8 L9 22 L10 25 H13 L14 9 L15 25 H18 L19 17 L20 25 H23 L24 21 L25 25 H29' stroke='%236fa8ff' stroke-width='1.6' fill='none'/%3E%3C/svg%3E">
+  <style>
+    /* Same look as the lab pages and the other prelabs: paper white, bench slate for ink, enamel blue. */
+    :root {
+      --paper: #ffffff;
+      --wash: #f3f6f4;
+      --ink: #17211e;
+      --ink-soft: #4b5854;
+      --ink-faint: #74807c;
+      --rule: #c7d1cc;
+      --rule-strong: #8d9994;
+      --enamel: #1c4c9a;
+      --enamel-deep: #153a78;
+      --enamel-wash: #e9eff9;
+      --good: #1b7a40;
+      --good-wash: #edf7f0;
+      --flag: #ab2a1c;
+      --flag-wash: #fdf1ee;
+      --up: #1c4c9a;
+      --down: #b3401f;
+      --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+      --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: 17px; line-height: 1.6; }
+    .sheet { max-width: 1040px; margin: 0 auto; padding: 0 20px 64px; }
+    a { color: var(--enamel-deep); }
+    a:hover { color: var(--enamel); }
+
+    .masthead { padding: 28px 20px 26px; background: var(--wash); border-bottom: 1px solid var(--rule); }
+    .masthead-inner { max-width: 1000px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 28px; }
+    .eyebrow { margin: 0 0 4px; color: var(--ink-faint); font-size: 0.85rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+    h1 { margin: 0; font-family: var(--serif); font-size: 2.1rem; font-weight: 600; line-height: 1.15; }
+    .dek { margin: 8px 0 0; max-width: 62ch; color: var(--ink-soft); }
+    .mast-links { display: flex; flex-wrap: wrap; gap: 10px; }
+    .lab-button { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 6px; background: var(--enamel); color: #fff; font-weight: 600; text-decoration: none; white-space: nowrap; }
+    .lab-button:hover { background: var(--enamel-deep); color: #fff; }
+    .lab-button.quiet { background: #fff; color: var(--enamel-deep); border: 1.5px solid var(--enamel); }
+    .lab-button.quiet:hover { background: var(--enamel-wash); color: var(--enamel-deep); }
+
+    nav.contents { margin-top: 26px; padding: 12px 16px; border: 1px solid var(--rule); border-radius: 8px; font-size: 0.95rem; }
+    nav.contents ol { margin: 4px 0 0; padding-left: 1.4em; columns: 2 22rem; }
+
+    section { margin-top: 46px; }
+    h2 { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; font-family: var(--serif); font-size: 1.5rem; font-weight: 600; line-height: 1.25; }
+    .step { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 1.75rem; height: 1.75rem; border-radius: 50%; background: var(--enamel); color: #fff; font-family: var(--sans); font-size: 0.92rem; font-weight: 650; }
+    h3 { margin: 22px 0 6px; font-family: var(--serif); font-size: 1.18rem; font-weight: 600; }
+    p { margin: 0 0 12px; }
+    .prose { max-width: 70ch; }
+    .soft { color: var(--ink-soft); }
+    .small { font-size: 0.9rem; }
+    .formula { font-weight: 600; white-space: nowrap; }
+    .callout { max-width: 72ch; margin: 14px 0; padding: 12px 16px 2px; border-radius: 8px; background: var(--enamel-wash); border: 1px solid #cfdcf1; }
+    .callout h3 { margin-top: 0; font-size: 1.05rem; }
+    .eq { display: inline-block; margin: 4px 0 12px; padding: 8px 14px; border-radius: 6px; background: var(--wash); font-family: var(--serif); font-size: 1.2rem; }
+
+    table.ref { border-collapse: collapse; margin: 8px 0 16px; font-size: 0.94rem; font-variant-numeric: tabular-nums; }
+    table.ref th, table.ref td { padding: 5px 10px; border: 1px solid var(--rule); text-align: left; vertical-align: top; }
+    table.ref thead th { background: var(--wash); font-size: 0.86rem; }
+    table.ref td.num { white-space: nowrap; }
+    .table-scroll { overflow-x: auto; max-width: 100%; }
+    .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; align-items: start; }
+
+    .tool { margin: 14px 0; padding: 16px 18px 12px; border: 1px solid var(--rule); border-radius: 10px; background: #fbfcfb; }
+    .tool h3 { margin-top: 0; font-family: var(--sans); font-size: 1.02rem; }
+    .tool label { font-weight: 600; }
+    .tool input[type="text"] { padding: 7px 10px; border: 1.5px solid var(--rule-strong); border-radius: 6px; font: inherit; width: 10rem; }
+    .tool .out { margin: 10px 0 4px; font-size: 1rem; }
+    .tool .out b { font-size: 1.15rem; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 12px; }
+    .chip { padding: 6px 11px; border: 1.5px solid var(--rule-strong); border-radius: 6px; background: #fff; color: var(--ink); font: inherit; font-size: 0.93rem; font-weight: 600; cursor: pointer; }
+    .chip:hover { border-color: var(--enamel); background: var(--enamel-wash); }
+    .chip[aria-pressed="true"] { border-color: var(--enamel); background: var(--enamel); color: #fff; }
+    .button { padding: 8px 14px; border: 1.5px solid var(--enamel); border-radius: 6px; background: var(--enamel); color: #fff; font: inherit; font-size: 0.95rem; font-weight: 600; cursor: pointer; }
+    .button:hover { background: var(--enamel-deep); }
+    .button.quiet { background: #fff; color: var(--enamel-deep); }
+    .button.quiet:hover { background: var(--enamel-wash); }
+    .button[hidden] { display: none; }
+    button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid #f0b429; outline-offset: 2px; }
+
+    figure.chart { margin: 10px 0 16px; padding: 8px 10px 6px; border: 1px solid var(--rule); border-radius: 8px; background: #fff; }
+    figure.chart svg { display: block; width: 100%; height: auto; }
+    figure.chart figcaption { margin-top: 4px; font-size: 0.86rem; color: var(--ink-soft); }
+    .data-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; max-width: 820px; }
+    .structure { display: inline-block; padding: 6px 10px; border: 1px solid var(--rule); border-radius: 8px; background: #fff; }
+    .structure svg { display: block; }
+
+    .walk { margin: 10px 0 0; padding: 0; list-style: none; counter-reset: walk; max-width: 76ch; }
+    .walk li { position: relative; margin: 0 0 12px; padding: 0 0 0 2.3rem; counter-increment: walk; }
+    .walk li::before { content: counter(walk); position: absolute; left: 0; top: 0.1rem; display: flex; align-items: center; justify-content: center; width: 1.55rem; height: 1.55rem; border-radius: 50%; border: 1.5px solid var(--enamel); color: var(--enamel-deep); font-size: 0.86rem; font-weight: 700; }
+    .walk li[hidden] { display: none; }
+    .walk h4 { margin: 0 0 2px; font-size: 1rem; }
+    .walk p { margin: 0 0 6px; font-size: 0.97rem; }
+    .walk-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 0 2.3rem; }
+
+    .quiz { display: grid; gap: 14px; max-width: 780px; margin: 0; padding: 0; list-style: none; counter-reset: q; }
+    .q { padding: 14px 16px 12px; border: 1px solid var(--rule); border-radius: 8px; counter-increment: q; background: #fff; }
+    .q-text { margin: 0 0 10px; font-weight: 600; }
+    .quiz.numbered .q-text::before { content: counter(q) ". "; color: var(--ink-faint); }
+    .options { display: flex; flex-wrap: wrap; gap: 8px; }
+    .options button { padding: 7px 12px; border: 1.5px solid var(--rule-strong); border-radius: 6px; background: #fff; color: var(--ink); font: inherit; font-size: 0.95rem; text-align: left; cursor: pointer; }
+    .options button:hover { border-color: var(--enamel); background: var(--enamel-wash); }
+    .options button[data-state="right"] { border-color: var(--good); background: var(--good-wash); color: var(--good); font-weight: 600; }
+    .options button[data-state="wrong"] { border-color: var(--flag); background: var(--flag-wash); color: var(--flag); }
+    .feedback { margin: 10px 0 0; font-size: 0.95rem; }
+    .feedback:empty { display: none; }
+    .feedback b.right { color: var(--good); }
+    .feedback b.wrong { color: var(--flag); }
+    .score { margin: 16px 0 0; font-weight: 600; }
+    .score .done { color: var(--good); }
+    .reveal[hidden] { display: none; }
+    .reveal { margin-top: 14px; padding: 12px 16px; border-radius: 8px; border: 1.5px solid var(--good); background: var(--good-wash); max-width: 780px; }
+
+    .next { margin-top: 40px; padding: 18px 20px; border-radius: 10px; background: var(--wash); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; }
+    .next p { margin: 0; max-width: 60ch; }
+    .sources { margin-top: 40px; padding-top: 14px; border-top: 1px solid var(--rule); font-size: 0.86rem; color: var(--ink-soft); }
+    .sources h2 { font-size: 1.1rem; }
+    .sources ol { margin: 0; padding-left: 1.4em; }
+    .sources li { margin-bottom: 4px; }
+    .sources a { color: inherit; overflow-wrap: anywhere; }
+
+    @media (max-width: 820px) { .two { grid-template-columns: minmax(0, 1fr); } }
+    @media (max-width: 600px) {
+      body { font-size: 16px; }
+      .sheet { padding: 0 16px 48px; }
+      .masthead { padding: 22px 16px 20px; }
+      h1 { font-size: 1.7rem; }
+      .tool { padding: 14px 12px 10px; }
+      .walk li { padding-left: 2rem; }
+      .walk-buttons { margin-left: 2rem; }
+    }
+    @media print {
+      .mast-links, .next, .walk-buttons, .chips, nav.contents { display: none !important; }
+      .masthead { background: none; }
+      .walk li[hidden], .reveal[hidden] { display: block; }
+      figure.chart, .tool, .q { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <div>
+        <p class="eyebrow">Prelab review · Exam 1 Unknown · CHM 2211</p>
+        <h1>From spectra to structure</h1>
+        <p class="dek">About 30 minutes. What each kind of spectrum tells you, why each step at the NMR matters, and two compounds worked from formula to structure. Check yourself at the end.</p>
+      </div>
+      <div class="mast-links">
+        <a class="lab-button quiet" href="../guide/how-to-run-the-nmr.pdf" target="_blank" rel="noopener">Guide to running the NMR (PDF)</a>
+        <a class="lab-button" href="../">Open the lab <span aria-hidden="true">→</span></a>
+      </div>
+    </div>
+  </header>
+
+  <main class="sheet">
+    <nav class="contents" aria-label="Contents">
+      <b>In this review</b>
+      <ol>
+        <li><a href="#lab">What you will do</a></li>
+        <li><a href="#formula">Start with the formula</a></li>
+        <li><a href="#nmr-steps">Why each step at the NMR matters</a></li>
+        <li><a href="#proton">Reading a ¹H spectrum</a></li>
+        <li><a href="#carbon">¹³C and DEPT-135</a></li>
+        <li><a href="#ir">IR: which bonds are there</a></li>
+        <li><a href="#ms">The mass spectrum</a></li>
+        <li><a href="#worked">Worked from start to finish</a></li>
+        <li><a href="#your-turn">Your turn</a></li>
+        <li><a href="#check">Check yourself</a></li>
+      </ol>
+    </nav>
+
+    <section id="lab" aria-labelledby="lab-title">
+      <h2 id="lab-title"><span class="step" aria-hidden="true">1</span>What you will do</h2>
+      <div class="prose">
+        <p>You are given an unknown organic compound and its molecular formula. The code at the top of the lab page decides which compound it is, so your classmates' unknowns are different from yours. In the virtual room you will:</p>
+        <ul>
+          <li>make up an NMR sample in CDCl₃, put it into the magnet, lock, shim and record <b>¹H, ¹³C and DEPT-135</b> spectra, then process them yourself;</li>
+          <li>record an <b>IR</b> spectrum of the pure compound on an ATR crystal;</li>
+          <li>inject a solution into a <b>GC-MS</b> and read the mass spectrum of your compound's peak;</li>
+          <li>enter what you read into tables, which the page checks as you go;</li>
+          <li>draw the one structure that fits everything, name it, and explain how each spectrum supports it. <b>The structure is not checked by the page</b>: your instructor marks it.</li>
+        </ul>
+        <p>The <a href="../guide/how-to-run-the-nmr.pdf" target="_blank" rel="noopener">guide to running the NMR</a> takes you through every click at the spectrometer. This review is about the chemistry: what the spectra mean.</p>
+      </div>
+    </section>
+
+    <section id="formula" aria-labelledby="formula-title">
+      <h2 id="formula-title"><span class="step" aria-hidden="true">2</span>Start with the formula</h2>
+      <div class="prose">
+        <p>Before looking at a single spectrum, work out the <b>degrees of unsaturation</b> (also called the index of hydrogen deficiency): how many rings and π bonds the molecule must have. Every ring, every C=C, every C=O counts 1; a triple bond counts 2.</p>
+        <p class="eq">degrees of unsaturation = C − (H + X)/2 + N/2 + 1</p>
+        <p>C, H, N and X are the numbers of carbon, hydrogen, nitrogen and halogen (F, Cl, Br, I) atoms. Oxygen and sulfur do not change it. Four or more often means a benzene ring: one ring and three C=C.</p>
+      </div>
+      <div class="tool" id="dou-tool">
+        <h3>Try it</h3>
+        <label for="dou-in">Formula</label>
+        <input type="text" id="dou-in" value="C6H12O" autocomplete="off" spellcheck="false">
+        <div class="chips" role="group" aria-label="Example formulas">
+          <button type="button" class="chip" data-f="C6H12O">C6H12O</button>
+          <button type="button" class="chip" data-f="C9H12">C9H12</button>
+          <button type="button" class="chip" data-f="C4H9Br">C4H9Br</button>
+          <button type="button" class="chip" data-f="C5H9N">C5H9N</button>
+          <button type="button" class="chip" data-f="C10H14O2">C10H14O2</button>
+        </div>
+        <p class="out" id="dou-out" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section id="nmr-steps" aria-labelledby="nmr-steps-title">
+      <h2 id="nmr-steps-title"><span class="step" aria-hidden="true">3</span>Why each step at the NMR matters</h2>
+      <div class="prose">
+        <p>The room works the way a real spectrometer does, so each step has a reason. The guide says how to do each one; here is why.</p>
+      </div>
+      <div class="table-scroll">
+        <table class="ref">
+          <thead><tr><th>Step</th><th>Why it matters</th></tr></thead>
+          <tbody>
+            <tr><td>Dissolve in CDCl₃</td><td>Deuterium gives no ¹H signal, so the solvent does not bury your compound. Only the trace of CHCl₃ left in it shows, at 7.26 ppm (¹H); its carbon gives a small triplet at 77.16 ppm (¹³C). Water in the solvent shows near 1.56 ppm.</td></tr>
+            <tr><td>Fill the tube to about 4 cm and set the depth</td><td>The coil that sends and picks up the signal sees only the middle of the sample. The liquid must cover it, with its middle at the coil's middle, or the field is uneven and every line broadens.</td></tr>
+            <tr><td>Lock</td><td>The spectrometer watches the solvent's deuterium signal and corrects the field so it never drifts. Without a lock, lines smear while scans are added up.</td></tr>
+            <tr><td>Shim</td><td>Small extra coils make the field the same all through the sample. The more even the field, the narrower and taller the lines, and the higher the lock level: that is how you know when you are done.</td></tr>
+            <tr><td>Scans and receiver gain</td><td>Each scan is one pulse and one recording, the FID. Adding scans makes the signal grow faster than the noise: four times the scans gives a spectrum twice as clean. ¹³C needs hundreds of scans, since only about 1 carbon in 100 is ¹³C. Too high a gain clips the FID and ruins the spectrum.</td></tr>
+            <tr><td>Fourier transform</td><td>Turns the FID, all the frequencies sounding together, into a spectrum of peaks.</td></tr>
+            <tr><td>Phase and baseline</td><td>Every peak must stand upright and symmetric on a flat baseline, or its position and its integral are wrong.</td></tr>
+            <tr><td>Reference</td><td>Chemical shifts are measured from TMS, set at exactly 0.00 ppm. An unreferenced spectrum can be off by 0.1 ppm, which makes every shift you report wrong.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="proton" aria-labelledby="proton-title">
+      <h2 id="proton-title"><span class="step" aria-hidden="true">4</span>Reading a ¹H spectrum</h2>
+      <div class="prose">
+        <p>A ¹H spectrum answers four questions. Ask them in this order for every spectrum.</p>
+        <ol>
+          <li><b>How many signals?</b> One for each set of equivalent hydrogens: hydrogens that symmetry or free rotation makes identical. The three H of a CH₃ give one signal; the two CH₃ groups of an isopropyl group give one signal between them.</li>
+          <li><b>Where (the chemical shift, δ)?</b> Hydrogens near electronegative atoms, π bonds or rings come further left (downfield). The table below gives the usual places.</li>
+          <li><b>How many H (the integral)?</b> The area of a signal is proportional to the number of hydrogens that give it. Integrals give ratios: scale them so they add up to the H in your formula.</li>
+          <li><b>How many neighbours (the splitting)?</b> A signal is split by hydrogens on the next carbon(s). With <i>n</i> equivalent neighbours it has <i>n</i> + 1 lines. The gap between the lines is the coupling constant <i>J</i>, in Hz; two groups that split each other share the same <i>J</i>.</li>
+        </ol>
+      </div>
+
+      <h3>Where hydrogens usually appear</h3>
+      <div class="table-scroll">
+        <table class="ref">
+          <thead><tr><th>Kind of hydrogen</th><th>δ (ppm)</th></tr></thead>
+          <tbody>
+            <tr><td>C–H in an alkyl chain (CH₃, CH₂, CH)</td><td class="num">0.8–1.7</td></tr>
+            <tr><td>C–H next to C=O, a benzene ring or a C=C</td><td class="num">2.0–2.7</td></tr>
+            <tr><td>C–H next to N</td><td class="num">2.2–3.0</td></tr>
+            <tr><td>C–H on a carbon bearing O, Cl or Br</td><td class="num">3.3–4.5</td></tr>
+            <tr><td>C=C–H (alkene)</td><td class="num">4.5–6.5</td></tr>
+            <tr><td>Benzene ring H</td><td class="num">6.5–8.2</td></tr>
+            <tr><td>Aldehyde H, O=C–H</td><td class="num">9.5–10.1</td></tr>
+            <tr><td>Carboxylic acid O–H</td><td class="num">10–13, broad</td></tr>
+            <tr><td>Alcohol O–H, amine N–H</td><td class="num">about 1–5, broad, moves with concentration</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="prose small soft">Ranges overlap and two neighbouring groups shift a hydrogen further. Use the table to narrow the choices, then let the splitting and the other spectra decide.</p>
+
+      <div class="tool" id="split-tool">
+        <h3>Splitting: n neighbours give n + 1 lines</h3>
+        <p class="small soft">Choose how many equivalent hydrogens sit on the neighbouring carbon(s). The heights follow Pascal's triangle.</p>
+        <div class="chips" role="group" aria-label="Number of neighbouring hydrogens" id="split-chips"></div>
+        <figure class="chart"><svg id="split-svg" viewBox="0 0 640 170" role="img" aria-label="A multiplet"></svg><figcaption id="split-cap"></figcaption></figure>
+      </div>
+
+      <h3>Patterns worth knowing on sight</h3>
+      <div class="table-scroll">
+        <table class="ref">
+          <thead><tr><th>You see</th><th>It usually means</th></tr></thead>
+          <tbody>
+            <tr><td>a 2H quartet and a 3H triplet with the same J (about 7 Hz)</td><td>an ethyl group, CH₃CH₂–</td></tr>
+            <tr><td>a 1H septet and a 6H doublet with the same J</td><td>an isopropyl group, (CH₃)₂CH–</td></tr>
+            <tr><td>a 9H singlet</td><td>a tert-butyl group, (CH₃)₃C–</td></tr>
+            <tr><td>a 3H singlet</td><td>a CH₃ with no H on its neighbour: on O (about 3.3–3.9), on C=O (about 2.1), on a ring (about 2.3)</td></tr>
+            <tr><td>5H near 7.2–7.5</td><td>a benzene ring with one substituent</td></tr>
+            <tr><td>two 2H doublets between 6.5 and 8.2</td><td>a benzene ring with two different groups opposite each other (para)</td></tr>
+            <tr><td>a broad singlet that shrinks or vanishes after a D₂O shake</td><td>an O–H or N–H: its H trades places with deuterium</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <h3>The D₂O shake</h3>
+        <p>Hydrogens on O or N trade places with deuterium from D₂O, and deuterium gives no ¹H signal. Shake the sample with a drop of D₂O, record again, and any signal that shrinks or disappears is an OH or NH. A new small peak of HOD appears near 4.7 ppm. In the lab this step is optional.</p>
+      </div>
+    </section>
+
+    <section id="carbon" aria-labelledby="carbon-title">
+      <h2 id="carbon-title"><span class="step" aria-hidden="true">5</span>¹³C and DEPT-135</h2>
+      <div class="two">
+        <div class="prose">
+          <p>A ¹³C spectrum is recorded with the hydrogens decoupled, so <b>every kind of carbon gives one single line</b>. Count the lines: if there are fewer than the carbons in the formula, the molecule has symmetry. Line heights do <b>not</b> count carbons: a carbon with no hydrogens is usually small.</p>
+          <p><b>DEPT-135</b> sorts the carbons by how many hydrogens they carry:</p>
+          <ul>
+            <li><span style="color: var(--up); font-weight: 600">CH₃ and CH point up</span>,</li>
+            <li><span style="color: var(--down); font-weight: 600">CH₂ points down</span>,</li>
+            <li>a carbon with no H (C=O, a ring carbon with a substituent, C≡N) <b>does not appear</b>.</li>
+          </ul>
+          <p>Read the two side by side: a line in the ¹³C spectrum that is missing from the DEPT is a carbon with no hydrogen. The solvent's triplet at 77.16 ppm is not in the DEPT either.</p>
+        </div>
+        <div>
+          <div class="table-scroll">
+            <table class="ref">
+              <thead><tr><th>Kind of carbon</th><th>δ (ppm)</th></tr></thead>
+              <tbody>
+                <tr><td>Alkyl C (C–C, C–H)</td><td class="num">0–50</td></tr>
+                <tr><td>C–Br, C–Cl</td><td class="num">25–60</td></tr>
+                <tr><td>C–N</td><td class="num">30–60</td></tr>
+                <tr><td>C–O</td><td class="num">50–90</td></tr>
+                <tr><td>C≡N</td><td class="num">115–125</td></tr>
+                <tr><td>C=C and benzene ring C</td><td class="num">110–160</td></tr>
+                <tr><td>C=O of acids, esters, amides</td><td class="num">160–185</td></tr>
+                <tr><td>C=O of aldehydes and ketones</td><td class="num">190–220</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="ir" aria-labelledby="ir-title">
+      <h2 id="ir-title"><span class="step" aria-hidden="true">6</span>IR: which bonds are there</h2>
+      <div class="prose">
+        <p>An IR spectrum shows dips (bands) where bonds absorb infrared light. You will not explain every band: look for the ones that say which groups are present, and for the ones that are <b>missing</b>, which rule groups out. A good order: is there a C=O near 1650–1820? An O–H or N–H above 3200? A C≡N near 2250? Benzene ring bands near 1600 and 1500?</p>
+        <p class="small soft">The lab's IR is an ATR instrument: the sample sits on a crystal. Its bands are in the same places as in any IR spectrum. Record a background first, with the crystal clean: without it, the air's carbon dioxide (a doublet near 2350) and water vapour show up.</p>
+      </div>
+      <div class="table-scroll">
+        <table class="ref">
+          <thead><tr><th>Bond</th><th>cm⁻¹</th><th>What it looks like</th></tr></thead>
+          <tbody>
+            <tr><td>O–H of an alcohol or phenol</td><td class="num">3200–3550</td><td>strong and broad</td></tr>
+            <tr><td>O–H of a carboxylic acid</td><td class="num">2500–3300</td><td>very broad, running under the C–H bands</td></tr>
+            <tr><td>N–H of an amine or amide</td><td class="num">3300–3500</td><td>medium; NH₂ gives two bands, NH one</td></tr>
+            <tr><td>C–H, sp³ (alkyl)</td><td class="num">2850–3000</td><td>medium to strong, just below 3000</td></tr>
+            <tr><td>C–H, sp² (ring or alkene)</td><td class="num">3000–3100</td><td>weak, just above 3000</td></tr>
+            <tr><td>C–H of an aldehyde</td><td class="num">about 2720 and 2820</td><td>two weak bands</td></tr>
+            <tr><td>C≡N</td><td class="num">2210–2260</td><td>medium, sharp</td></tr>
+            <tr><td>C=O</td><td class="num">1650–1820</td><td>strong and sharp; where it falls says which kind (below)</td></tr>
+            <tr><td>C=C of a benzene ring</td><td class="num">about 1600 and 1500</td><td>medium, sharp, often a pair</td></tr>
+            <tr><td>N–O of a nitro group</td><td class="num">1500–1550 and 1300–1370</td><td>both strong</td></tr>
+            <tr><td>C–O</td><td class="num">1000–1300</td><td>strong</td></tr>
+            <tr><td>C–Cl, C–Br</td><td class="num">below 800</td><td>medium to strong, at the low end</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Which kind of C=O</h3>
+      <div class="table-scroll">
+        <table class="ref">
+          <thead><tr><th>Carbonyl</th><th>cm⁻¹ (typical)</th></tr></thead>
+          <tbody>
+            <tr><td>acid chloride</td><td class="num">about 1800</td></tr>
+            <tr><td>anhydride</td><td class="num">two bands, about 1820 and 1760</td></tr>
+            <tr><td>ester</td><td class="num">1735–1750</td></tr>
+            <tr><td>aldehyde</td><td class="num">1720–1740</td></tr>
+            <tr><td>ketone</td><td class="num">about 1715</td></tr>
+            <tr><td>carboxylic acid</td><td class="num">1700–1725</td></tr>
+            <tr><td>amide</td><td class="num">1640–1690</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="prose small soft">A C=O joined to a C=C or a benzene ring (conjugated) comes 20–40 cm⁻¹ lower.</p>
+    </section>
+
+    <section id="ms" aria-labelledby="ms-title">
+      <h2 id="ms-title"><span class="step" aria-hidden="true">7</span>The mass spectrum</h2>
+      <div class="prose">
+        <p>In a GC-MS the gas chromatograph separates what was injected, and each compound leaves the column at its own <b>retention time</b>. As it comes off, the mass spectrometer strikes the molecules with fast electrons (70 eV). Each molecule loses an electron to become the <b>molecular ion</b>, M⁺, and many molecular ions break into fragments. The spectrum shows the ions by their mass (m/z), the tallest set to 100%.</p>
+        <ul>
+          <li><b>M⁺</b>, the molecular ion, is usually the highest m/z of any size: the molar mass, counted with the most common isotopes. Check it against your formula. It can be small, or even missing when the ion breaks up completely.</li>
+          <li>The <b>base peak</b> is the tallest; it is often a fragment, not M⁺.</li>
+          <li><b>Odd M⁺, odd number of N</b> (the nitrogen rule): a compound of C, H, O and halogens has an even molar mass.</li>
+          <li><b>M+1</b>: ¹³C makes a small peak one mass up, about 1.1% of M⁺ for every carbon.</li>
+          <li><b>M+2</b>: chlorine and bromine have two common isotopes, two mass units apart. One Cl gives an M+2 about a third as tall as M⁺; one Br gives an M+2 about as tall as M⁺.</li>
+          <li><b>Fragments</b> are read as losses from M⁺: the difference in mass says what fell off.</li>
+        </ul>
+      </div>
+      <div class="tool" id="iso-tool">
+        <h3>What halogen does to M⁺</h3>
+        <div class="chips" role="group" aria-label="Halogen" id="iso-chips">
+          <button type="button" class="chip" data-x="none" aria-pressed="true">No Cl or Br</button>
+          <button type="button" class="chip" data-x="cl" aria-pressed="false">One Cl</button>
+          <button type="button" class="chip" data-x="br" aria-pressed="false">One Br</button>
+        </div>
+        <figure class="chart"><svg id="iso-svg" viewBox="0 0 640 170" role="img" aria-label="The molecular ion region"></svg><figcaption id="iso-cap"></figcaption></figure>
+      </div>
+      <div class="two">
+        <div>
+          <h3>Common losses from M⁺</h3>
+          <table class="ref">
+            <thead><tr><th>Loss</th><th>Usually</th></tr></thead>
+            <tbody>
+              <tr><td class="num">M − 15</td><td>CH₃</td></tr>
+              <tr><td class="num">M − 17</td><td>OH</td></tr>
+              <tr><td class="num">M − 18</td><td>H₂O (alcohols)</td></tr>
+              <tr><td class="num">M − 28</td><td>CO, or C₂H₄</td></tr>
+              <tr><td class="num">M − 29</td><td>C₂H₅, or CHO</td></tr>
+              <tr><td class="num">M − 31</td><td>OCH₃</td></tr>
+              <tr><td class="num">M − 45</td><td>OC₂H₅, or COOH</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <h3>Common fragment ions</h3>
+          <table class="ref">
+            <thead><tr><th>m/z</th><th>Usually</th></tr></thead>
+            <tbody>
+              <tr><td class="num">29</td><td>C₂H₅⁺ or CHO⁺</td></tr>
+              <tr><td class="num">31</td><td>CH₂=OH⁺ (from CH₂–OH)</td></tr>
+              <tr><td class="num">43</td><td>CH₃C≡O⁺ or C₃H₇⁺</td></tr>
+              <tr><td class="num">57</td><td>C₄H₉⁺</td></tr>
+              <tr><td class="num">77</td><td>C₆H₅⁺ (a benzene ring)</td></tr>
+              <tr><td class="num">91</td><td>C₇H₇⁺ (a benzyl group)</td></tr>
+              <tr><td class="num">105</td><td>C₆H₅C≡O⁺</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="worked" aria-labelledby="worked-title">
+      <h2 id="worked-title"><span class="step" aria-hidden="true">8</span>Worked from start to finish</h2>
+      <div class="prose">
+        <p>A practice compound of formula <span class="formula">C<sub>4</sub>H<sub>9</sub>Br</span>. It is not one of the lab's unknowns, and it is the practice sample whose processed spectra appear in the guide. Look at the four spectra, then walk through the reasoning a step at a time.</p>
+      </div>
+      <div class="data-grid">
+        <figure class="chart"><svg id="w-h" viewBox="0 0 640 230" role="img" aria-label="Proton spectrum of the practice compound"></svg><figcaption>¹H (400 MHz, CDCl₃). Boxes: each multiplet spread out so its lines can be counted. Each stick is as tall as the multiplet's tallest line; the integrals are the numbers (2H, 3H).</figcaption></figure>
+        <figure class="chart"><svg id="w-c" viewBox="0 0 640 244" role="img" aria-label="Carbon spectrum and DEPT-135 of the practice compound"></svg><figcaption>¹³C (above) and DEPT-135 (below), CDCl₃. The solvent and TMS are left out.</figcaption></figure>
+        <figure class="chart"><svg id="w-ir" viewBox="0 0 640 200" role="img" aria-label="IR spectrum of the practice compound"></svg><figcaption>IR, drawn from the band positions of the liquid.</figcaption></figure>
+        <figure class="chart"><svg id="w-ms" viewBox="0 0 640 200" role="img" aria-label="Mass spectrum of the practice compound"></svg><figcaption>Mass spectrum (EI, 70 eV).</figcaption></figure>
+      </div>
+      <ol class="walk" id="walk">
+        <li><h4>The formula</h4><p>C₄H₉Br: 4 − (9 + 1)/2 + 1 = <b>0</b> degrees of unsaturation. No ring, no double bond: an open chain with single bonds only.</p></li>
+        <li hidden><h4>The mass spectrum</h4><p>Two peaks of equal height at m/z <b>136 and 138</b>: M⁺ and M+2 of a compound with <b>one Br</b> (⁷⁹Br and ⁸¹Br). The base peak, m/z <b>57</b>, is 136 − 79: the molecule has lost its Br and left C₄H₉⁺.</p></li>
+        <li hidden><h4>The IR</h4><p>Only C–H bands below 3000 (sp³ C–H) and bends near 1460 and 1380. <b>No</b> broad O–H, <b>no</b> C=O near 1700. The strong band near 640 cm⁻¹ is the C–Br stretch.</p></li>
+        <li hidden><h4>¹³C and DEPT-135</h4><p><b>Four lines for four carbons</b>: no symmetry, every carbon different. In the DEPT, three point <b>down</b> (CH₂) and one points <b>up</b> (13.2: CH₃). So the carbons are CH₃, CH₂, CH₂, CH₂: no branch, since a branch would need a CH or a carbon with no H. The CH₂ at 33.4 carries the Br; the one at 34.8 is next to it.</p></li>
+        <li hidden><h4>¹H: four signals, 2 : 2 : 2 : 3</h4><p>The integrals add up to 9, the H in the formula. The <b>2H triplet at 3.41</b> is a CH₂ on the carbon bearing Br (3.3–4.5), with two neighbours. The <b>3H triplet at 0.94</b> is a CH₃ with two neighbours. Between them, the <b>quintet at 1.85</b> (4 neighbours: 2 + 2) and the <b>sextet at 1.47</b> (5 neighbours: 2 + 3).</p></li>
+        <li hidden><h4>The structure</h4><p>Everything fits one straight chain with Br on the end: <b>CH₃CH₂CH₂CH₂Br, 1-bromobutane</b>. Check it against every spectrum: four kinds of C, four kinds of H in a 3 : 2 : 2 : 2 ratio, each split by its neighbours, M⁺ 136/138, no O–H, no C=O.</p>
+          <div class="structure" aria-label="Skeletal structure of 1-bromobutane"><svg width="190" height="80" viewBox="0 0 190 80"><g stroke="#17211e" stroke-width="2.2" fill="none" stroke-linecap="round"><path d="M18 58 L50 40 L82 58 L114 40 L142 56"/></g><text x="146" y="62" font-family="system-ui, sans-serif" font-size="17" fill="#8a2a12">Br</text></svg></div>
+        </li>
+      </ol>
+      <div class="walk-buttons">
+        <button type="button" class="button" id="walk-next">Next step</button>
+        <button type="button" class="button quiet" id="walk-all">Show every step</button>
+      </div>
+    </section>
+
+    <section id="your-turn" aria-labelledby="your-turn-title">
+      <h2 id="your-turn-title"><span class="step" aria-hidden="true">9</span>Your turn</h2>
+      <div class="prose">
+        <p>A second practice compound, also not one of the lab's unknowns: formula <span class="formula">C<sub>4</sub>H<sub>10</sub>O</span>. In its ¹H spectrum the broad signal at 2.1 ppm disappeared after a D₂O shake. Answer the questions, one spectrum at a time.</p>
+      </div>
+      <div class="data-grid">
+        <figure class="chart"><svg id="t-h" viewBox="0 0 640 230" role="img" aria-label="Proton spectrum of the second practice compound"></svg><figcaption>¹H (400 MHz, CDCl₃).</figcaption></figure>
+        <figure class="chart"><svg id="t-c" viewBox="0 0 640 244" role="img" aria-label="Carbon spectrum and DEPT-135 of the second practice compound"></svg><figcaption>¹³C (above) and DEPT-135 (below), CDCl₃.</figcaption></figure>
+        <figure class="chart"><svg id="t-ir" viewBox="0 0 640 200" role="img" aria-label="IR spectrum of the second practice compound"></svg><figcaption>IR, drawn from the band positions of the liquid.</figcaption></figure>
+        <figure class="chart"><svg id="t-ms" viewBox="0 0 640 200" role="img" aria-label="Mass spectrum of the second practice compound"></svg><figcaption>Mass spectrum (EI, 70 eV).</figcaption></figure>
+      </div>
+      <ol class="quiz numbered" id="turn-quiz"></ol>
+      <div class="reveal" id="turn-reveal" hidden>
+        <p><b>It is 2-methylpropan-1-ol, (CH₃)₂CHCH₂OH.</b> No unsaturation; an O–H (broad band near 3335, the signal that vanished with D₂O, the C–O near 1041); three kinds of carbon for four carbons, because the two CH₃ are the same; a 6H doublet (two CH₃ beside one H), a 2H doublet at 3.40 (CH₂ on O beside the same H), and that one H split by all eight neighbours into a nonet near 1.77. In the mass spectrum, M⁺ 74, m/z 56 (M − 18, water lost), 43 (C₃H₇⁺) and 31 (CH₂=OH⁺, from the CH₂OH end).</p>
+        <div class="structure" aria-label="Skeletal structure of 2-methylpropan-1-ol"><svg width="170" height="90" viewBox="0 0 170 90"><g stroke="#17211e" stroke-width="2.2" fill="none" stroke-linecap="round"><path d="M22 72 L56 54 L90 72 L118 56"/><path d="M56 54 L56 18"/></g><text x="121" y="62" font-family="system-ui, sans-serif" font-size="17" fill="#b0261c">OH</text></svg></div>
+      </div>
+    </section>
+
+    <section id="check" aria-labelledby="check-title">
+      <h2 id="check-title"><span class="step" aria-hidden="true">10</span>Check yourself</h2>
+      <ol class="quiz numbered" id="quiz"></ol>
+      <p class="score" id="score" aria-live="polite"></p>
+    </section>
+
+    <div class="next">
+      <p>Ready? Open the lab, and keep the guide to running the NMR open beside it. In the tables, give ¹H shifts to two decimals and ¹³C shifts to one, and leave out the solvent, water and TMS.</p>
+      <div class="mast-links">
+        <a class="lab-button quiet" href="../guide/how-to-run-the-nmr.pdf" target="_blank" rel="noopener">Guide (PDF)</a>
+        <a class="lab-button" href="../">Open the lab <span aria-hidden="true">→</span></a>
+      </div>
+    </div>
+
+    <section class="sources" aria-labelledby="sources-title">
+      <h2 id="sources-title">Sources</h2>
+      <ol>
+        <li>Mass spectra of both practice compounds: NIST Mass Spectrometry Data Center, in the NIST Chemistry WebBook (NIST Standard Reference Database 69), <a href="https://webbook.nist.gov/cgi/cbook.cgi?ID=C109659">1-bromobutane</a> and <a href="https://webbook.nist.gov/cgi/cbook.cgi?ID=C78831">2-methylpropan-1-ol</a>, accessed 17 October 2026.</li>
+        <li>IR band positions: NIST Chemistry WebBook, the liquid spectra of 1-bromobutane (Continental Oil Co.) and 2-methylpropan-1-ol (Pacific Northwest National Laboratory), and the vapour spectrum of 1-bromobutane for the region above 1000 cm⁻¹. The IR curves here are drawn from those band positions, not copied.</li>
+        <li>¹H and ¹³C of 2-methylpropan-1-ol in CDCl₃: the spectra listed for it in PubChem (CID 6560; John Wiley &amp; Sons spectral collection), accessed 17 October 2026. ¹H and ¹³C of 1-bromobutane: the usual published values in CDCl₃.</li>
+        <li>The ranges in the tables are the usual ones found in organic chemistry texts, rounded; real compounds can fall a little outside them.</li>
+      </ol>
+      <p>This review is part of a simulated lab. The spectra in the lab are drawn from published data for each unknown; the practice compounds here are not among them.</p>
+    </section>
+  </main>
+
+<script>
+(function () {
+  'use strict';
+  var NS = 'http://www.w3.org/2000/svg';
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+  function svgEl(tag, attrs, text) {
+    var n = document.createElementNS(NS, tag);
+    for (var k in attrs) if (Object.prototype.hasOwnProperty.call(attrs, k)) n.setAttribute(k, attrs[k]);
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function clear(svg) { while (svg.firstChild) svg.removeChild(svg.firstChild); }
+  var INK = '#17211e', SOFT = '#74807c', RULE = '#c7d1cc', BLUE = '#1c4c9a', RED = '#b3401f';
+  var SUB = '₀₁₂₃₄₅₆₇₈₉';
+  function subs(f) { return String(f).replace(/\d/g, function (d) { return SUB[+d]; }); }
+
+  // ---- degrees of unsaturation ----
+  function parseFormula(text) {
+    var t = String(text).replace(/\s+/g, '');
+    if (!/^([A-Z][a-z]?\d*)+$/.test(t)) return null;
+    var counts = {}, re = /([A-Z][a-z]?)(\d*)/g, m;
+    while ((m = re.exec(t))) counts[m[1]] = (counts[m[1]] || 0) + (m[2] ? parseInt(m[2], 10) : 1);
+    return counts;
+  }
+  function showDou() {
+    var input = $('dou-in'), out = $('dou-out');
+    var c = parseFormula(input.value);
+    out.textContent = '';
+    Array.prototype.forEach.call(document.querySelectorAll('#dou-tool .chip'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-f') === input.value.trim() ? 'true' : 'false'); });
+    if (!c || !c.C) { out.textContent = 'Type a formula such as C6H12O.'; return; }
+    var allowed = { C: 1, H: 1, N: 1, O: 1, S: 1, F: 1, Cl: 1, Br: 1, I: 1 };
+    for (var k in c) if (!allowed[k]) { out.textContent = 'This counts C, H, N, O, S and the halogens only.'; return; }
+    var C = c.C, H = c.H || 0, N = c.N || 0, X = (c.F || 0) + (c.Cl || 0) + (c.Br || 0) + (c.I || 0);
+    var d = C - (H + X) / 2 + N / 2 + 1;
+    var work = C + ' − ' + (X ? '(' + H + ' + ' + X + ')' : H) + '/2' + (N ? ' + ' + N + '/2' : '') + ' + 1 = ';
+    if (d < 0 || d !== Math.floor(d)) { out.textContent = work + d + ': that is not a possible formula for a neutral molecule. Check the H count.'; return; }
+    out.appendChild(document.createTextNode(subs(input.value.trim()) + ': ' + work));
+    out.appendChild(el('b', null, String(d)));
+    var hint = d === 0 ? '. No rings or π bonds: single bonds only.'
+      : d >= 4 ? '. Four or more: think of a benzene ring (4) first.'
+      : d === 1 ? '. One ring or one double bond (C=C or C=O).'
+      : ' rings and π bonds in all (a triple bond counts 2).';
+    out.appendChild(document.createTextNode(hint));
+  }
+  $('dou-in').addEventListener('input', showDou);
+  Array.prototype.forEach.call(document.querySelectorAll('#dou-tool .chip'), function (b) {
+    b.addEventListener('click', function () { $('dou-in').value = b.getAttribute('data-f'); showDou(); });
+  });
+  showDou();
+
+  // ---- splitting explorer ----
+  var NAMES = ['singlet', 'doublet', 'triplet', 'quartet', 'quintet', 'sextet', 'septet', 'octet', 'nonet'];
+  function pascal(n) { var row = [1]; for (var k = 0; k < n; k++) { var next = [1]; for (var i = 1; i < row.length; i++) next.push(row[i - 1] + row[i]); next.push(1); row = next; } return row; }
+  function showSplit(n) {
+    var svg = $('split-svg'); clear(svg);
+    var row = pascal(n), max = Math.max.apply(null, row), gap = n > 5 ? 46 : 60, mid = 320, base = 140;
+    svg.appendChild(svgEl('line', { x1: 40, y1: base, x2: 600, y2: base, stroke: RULE, 'stroke-width': 1.5 }));
+    row.forEach(function (h, i) {
+      var x = mid + (i - (row.length - 1) / 2) * gap, top = base - 112 * h / max;
+      svg.appendChild(svgEl('line', { x1: x, y1: base, x2: x, y2: top, stroke: BLUE, 'stroke-width': 4, 'stroke-linecap': 'round' }));
+      svg.appendChild(svgEl('text', { x: x, y: top - 6, 'text-anchor': 'middle', 'font-size': 14, fill: INK, 'font-family': 'system-ui, sans-serif' }, String(h)));
+    });
+    if (n > 0) {
+      var xa = mid + (0 - (row.length - 1) / 2) * gap, xb = xa + gap;
+      svg.appendChild(svgEl('path', { d: 'M' + xa + ' ' + (base + 12) + ' L' + xb + ' ' + (base + 12), stroke: SOFT, 'stroke-width': 1.5 }));
+      svg.appendChild(svgEl('text', { x: (xa + xb) / 2, y: base + 27, 'text-anchor': 'middle', 'font-size': 13, fill: SOFT, 'font-family': 'system-ui, sans-serif' }, 'J'));
+    }
+    $('split-cap').textContent = n + ' neighbouring H → ' + (n + 1) + ' line' + (n ? 's' : '') + ': a ' + NAMES[n] + ', heights ' + row.join(' : ') + '.' +
+      (n === 2 ? ' Example: the CH₃ of an ethyl group, beside a CH₂.' : n === 3 ? ' Example: the CH₂ of an ethyl group, beside a CH₃.' : n === 6 ? ' Example: the CH of an isopropyl group, beside two CH₃.' : n === 1 ? ' Example: the two CH₃ of an isopropyl group, beside one CH.' : n === 0 ? ' Example: a CH₃ on an O or on a C=O, with no H next door.' : '');
+    Array.prototype.forEach.call($('split-chips').children, function (b, i) { b.setAttribute('aria-pressed', i === n ? 'true' : 'false'); });
+  }
+  for (var sn = 0; sn <= 8; sn++) {
+    (function (n) {
+      var b = el('button', 'chip', n + (n === 1 ? ' neighbour' : ' neighbours'));
+      b.type = 'button';
+      b.addEventListener('click', function () { showSplit(n); });
+      $('split-chips').appendChild(b);
+    })(sn);
+  }
+  showSplit(3);
+
+  // ---- isotope pattern ----
+  function showIso(kind) {
+    var svg = $('iso-svg'); clear(svg);
+    var bars = kind === 'cl' ? [[0, 100], [1, 4.5], [2, 32], [3, 1.4]] : kind === 'br' ? [[0, 100], [1, 4.5], [2, 97], [3, 4.4]] : [[0, 100], [1, 4.5], [2, 0.3]];
+    var base = 135, x0 = 200, step = 80;
+    svg.appendChild(svgEl('line', { x1: 140, y1: base, x2: 520, y2: base, stroke: RULE, 'stroke-width': 1.5 }));
+    bars.forEach(function (b) {
+      var x = x0 + b[0] * step, top = base - 105 * b[1] / 100;
+      svg.appendChild(svgEl('rect', { x: x - 9, y: top, width: 18, height: Math.max(1, base - top), fill: b[0] === 0 ? BLUE : b[0] === 2 && kind !== 'none' ? RED : SOFT }));
+      svg.appendChild(svgEl('text', { x: x, y: base + 18, 'text-anchor': 'middle', 'font-size': 13, fill: INK, 'font-family': 'system-ui, sans-serif' }, b[0] === 0 ? 'M' : 'M+' + b[0]));
+    });
+    $('iso-cap').textContent = kind === 'cl' ? 'One chlorine: ³⁵Cl and ³⁷Cl are about 3 : 1, so M+2 is about a third of M⁺.'
+      : kind === 'br' ? 'One bromine: ⁷⁹Br and ⁸¹Br are almost 1 : 1, so M⁺ and M+2 are about equally tall.'
+      : 'No Cl or Br: only a small M+1 (here about 4.5%, as for four carbons) and almost no M+2.';
+    Array.prototype.forEach.call($('iso-chips').children, function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-x') === kind ? 'true' : 'false'); });
+  }
+  Array.prototype.forEach.call($('iso-chips').children, function (b) { b.addEventListener('click', function () { showIso(b.getAttribute('data-x')); }); });
+  showIso('none');
+
+  // ---- spectra drawn from line lists ----
+  function axis(svg, x0, x1, y, from, to, ticks, label) {
+    svg.appendChild(svgEl('line', { x1: x0, y1: y, x2: x1, y2: y, stroke: INK, 'stroke-width': 1.2 }));
+    ticks.forEach(function (v) {
+      var x = x0 + (from - v) / (from - to) * (x1 - x0);
+      svg.appendChild(svgEl('line', { x1: x, y1: y, x2: x, y2: y + 5, stroke: INK, 'stroke-width': 1 }));
+      svg.appendChild(svgEl('text', { x: x, y: y + 18, 'text-anchor': 'middle', 'font-size': 12, fill: INK, 'font-family': 'system-ui, sans-serif' }, String(v)));
+    });
+    svg.appendChild(svgEl('text', { x: x1, y: y + 32, 'text-anchor': 'end', 'font-size': 12, fill: SOFT, 'font-family': 'system-ui, sans-serif' }, label));
+  }
+
+  // signals: { ppm, n (neighbours), J, H, label, broad }
+  function protonSpectrum(svg, signals, from, to) {
+    clear(svg);
+    var x0 = 30, x1 = 620, base = 180;
+    function X(p) { return x0 + (from - p) / (from - to) * (x1 - x0); }
+    var ticks = []; for (var t = Math.floor(from); t >= Math.ceil(to); t--) ticks.push(t);
+    axis(svg, x0, x1, base, from, to, ticks, 'δ (ppm)');
+    var maxH = Math.max.apply(null, signals.map(function (s) { return s.broad ? 0 : s.H / pascalMax(s.n); }));
+    signals.forEach(function (s) {
+      var x = X(s.ppm);
+      if (s.broad) {
+        var w = 9, h = 22;
+        svg.appendChild(svgEl('path', { d: 'M' + (x - w * 2) + ' ' + base + ' Q' + (x - w) + ' ' + base + ' ' + x + ' ' + (base - h) + ' Q' + (x + w) + ' ' + base + ' ' + (x + w * 2) + ' ' + base, stroke: BLUE, 'stroke-width': 1.6, fill: 'none' }));
+      } else {
+        var row = pascal(s.n), sum = row.reduce(function (a, b) { return a + b; }, 0);
+        var hgt = 96 * (s.H / pascalMax(s.n)) / maxH;
+        svg.appendChild(svgEl('line', { x1: x, y1: base, x2: x, y2: base - hgt, stroke: BLUE, 'stroke-width': 2.2 }));
+        // the multiplet spread out in a box above it
+        var sp = row.length > 6 ? 5.5 : 7, bw = Math.max(26, (row.length - 1) * sp + 14), bx = x - bw / 2, by = 8, bh = 38;
+        svg.appendChild(svgEl('rect', { x: bx, y: by, width: bw, height: bh, fill: '#fff', stroke: RULE, rx: 3 }));
+        var rmax = Math.max.apply(null, row);
+        row.forEach(function (r, i) {
+          var lx = x + (i - (row.length - 1) / 2) * sp;
+          svg.appendChild(svgEl('line', { x1: lx, y1: by + bh - 4, x2: lx, y2: by + bh - 4 - 28 * r / rmax, stroke: BLUE, 'stroke-width': 1.6 }));
+        });
+        svg.appendChild(svgEl('line', { x1: x, y1: 60, x2: x, y2: base - hgt - 20, stroke: RULE, 'stroke-dasharray': '2 3' }));
+      }
+      var peakTop = s.broad ? base - 22 : base - 96 * (s.H / pascalMax(s.n)) / maxH;
+      svg.appendChild(svgEl('text', { x: x, y: peakTop - 6, 'text-anchor': 'middle', 'font-size': 12, 'font-weight': 600, fill: INK, 'font-family': 'system-ui, sans-serif' }, s.H + 'H'));
+      svg.appendChild(svgEl('text', { x: x, y: 57, 'text-anchor': 'middle', 'font-size': 11, fill: SOFT, 'font-family': 'system-ui, sans-serif' }, s.label));
+    });
+  }
+  function pascalMax(n) { var r = pascal(n); return r.reduce(function (a, b) { return a + b; }, 0) / Math.max.apply(null, r); }
+
+  // carbons: { ppm, H (0 to 3) }
+  function carbonSpectrum(svg, carbons, from) {
+    clear(svg);
+    var x0 = 30, x1 = 620, mid = 118, base = 205;
+    function X(p) { return x0 + (from - p) / from * (x1 - x0); }
+    var ticks = []; for (var t = from; t >= 0; t -= (from > 100 ? 20 : 10)) ticks.push(t);
+    axis(svg, x0, x1, base, from, 0, ticks, 'δ (ppm)');
+    svg.appendChild(svgEl('line', { x1: x0, y1: mid, x2: x1, y2: mid, stroke: RULE }));
+    svg.appendChild(svgEl('line', { x1: x0, y1: 168, x2: x1, y2: 168, stroke: RULE }));
+    svg.appendChild(svgEl('text', { x: x0, y: 16, 'font-size': 11.5, fill: SOFT, 'font-family': 'system-ui, sans-serif' }, '¹³C'));
+    svg.appendChild(svgEl('text', { x: x0, y: 134, 'font-size': 11.5, fill: SOFT, 'font-family': 'system-ui, sans-serif' }, 'DEPT-135'));
+    var lastX = -999, raised = false;
+    carbons.slice().sort(function (a, b) { return b.ppm - a.ppm; }).forEach(function (c) {
+      var x = X(c.ppm), h = c.H === 0 ? 40 : 76;
+      raised = Math.abs(x - lastX) < 30 ? !raised : false;
+      lastX = x;
+      svg.appendChild(svgEl('line', { x1: x, y1: mid, x2: x, y2: mid - h, stroke: INK, 'stroke-width': 2 }));
+      svg.appendChild(svgEl('text', { x: x + (raised ? 14 : 0), y: mid - h - 6 - (raised ? 13 : 0), 'text-anchor': 'middle', 'font-size': 11.5, fill: INK, 'font-family': 'system-ui, sans-serif' }, c.ppm.toFixed(1)));
+      if (c.H > 0) {
+        var up = c.H !== 2;
+        svg.appendChild(svgEl('line', { x1: x, y1: 168, x2: x, y2: up ? 140 : 196, stroke: up ? BLUE : RED, 'stroke-width': 2.4 }));
+      }
+    });
+  }
+
+  // bands: [cm-1, strength 0..1, half-width]
+  function irSpectrum(svg, bands, labels) {
+    clear(svg);
+    var x0 = 34, x1 = 620, top = 14, bot = 150, from = 4000, to = 600;
+    function X(v) { return x0 + (from - v) / (from - to) * (x1 - x0); }
+    axis(svg, x0, x1, bot + 6, from, to, [4000, 3500, 3000, 2500, 2000, 1500, 1000], 'cm⁻¹');
+    var d = '';
+    for (var v = from; v >= to; v -= 4) {
+      var a = 0;
+      bands.forEach(function (b) { var u = (v - b[0]) / b[2]; a += b[1] / (1 + u * u); });
+      var T = Math.exp(-2.2 * a);
+      d += (v === from ? 'M' : 'L') + X(v).toFixed(1) + ' ' + (top + 34 + (1 - T) * (bot - top - 36)).toFixed(1) + ' ';
+    }
+    // transmittance: the baseline (nothing absorbed) at the top, each band a dip
+    svg.appendChild(svgEl('path', { d: d, stroke: BLUE, 'stroke-width': 1.5, fill: 'none' }));
+    labels.forEach(function (l) {
+      var x = X(l[0]);
+      svg.appendChild(svgEl('text', { x: x, y: top + 8 + (l[2] ? 13 : 0), 'text-anchor': 'middle', 'font-size': 11, fill: INK, 'font-family': 'system-ui, sans-serif' }, l[1]));
+    });
+  }
+
+  // peaks: [m/z, %]
+  function massSpectrum(svg, peaks, maxMz, notes) {
+    clear(svg);
+    var x0 = 34, x1 = 620, top = 18, bot = 160;
+    function X(m) { return x0 + (m - 10) / (maxMz - 10) * (x1 - x0); }
+    var ticks = []; for (var t = 20; t <= maxMz; t += 20) ticks.push(t);
+    svg.appendChild(svgEl('line', { x1: x0, y1: bot, x2: x1, y2: bot, stroke: INK, 'stroke-width': 1.2 }));
+    ticks.forEach(function (t) {
+      svg.appendChild(svgEl('line', { x1: X(t), y1: bot, x2: X(t), y2: bot + 5, stroke: INK }));
+      svg.appendChild(svgEl('text', { x: X(t), y: bot + 18, 'text-anchor': 'middle', 'font-size': 12, fill: INK, 'font-family': 'system-ui, sans-serif' }, String(t)));
+    });
+    svg.appendChild(svgEl('text', { x: x1, y: bot + 32, 'text-anchor': 'end', 'font-size': 12, fill: SOFT, 'font-family': 'system-ui, sans-serif' }, 'm/z'));
+    peaks.forEach(function (p) {
+      var x = X(p[0]), h = (bot - top) * p[1] / 100;
+      svg.appendChild(svgEl('rect', { x: x - 2, y: bot - h, width: 4, height: Math.max(1, h), fill: BLUE }));
+    });
+    notes.forEach(function (n) {
+      var p = peaks.filter(function (q) { return q[0] === n[0]; })[0], h = p ? (bot - top) * p[1] / 100 : 0;
+      svg.appendChild(svgEl('text', { x: X(n[0]), y: bot - h - 6 - (n[2] || 0), 'text-anchor': 'middle', 'font-size': 11.5, fill: INK, 'font-family': 'system-ui, sans-serif' }, n[1]));
+    });
+  }
+
+  // practice compound 1: 1-bromobutane (C4H9Br)
+  protonSpectrum($('w-h'), [
+    { ppm: 3.41, n: 2, J: 6.8, H: 2, label: '3.41' },
+    { ppm: 1.85, n: 4, J: 7.0, H: 2, label: '1.85' },
+    { ppm: 1.47, n: 5, J: 7.3, H: 2, label: '1.47' },
+    { ppm: 0.94, n: 2, J: 7.4, H: 3, label: '0.94' }
+  ], 4.5, 0);
+  carbonSpectrum($('w-c'), [{ ppm: 34.8, H: 2 }, { ppm: 33.4, H: 2 }, { ppm: 21.4, H: 2 }, { ppm: 13.2, H: 3 }], 60);
+  irSpectrum($('w-ir'), [[2962, 1.0, 14], [2933, 0.6, 12], [2874, 0.5, 12], [1465, 0.45, 10], [1435, 0.25, 8], [1380, 0.2, 8], [1265, 0.45, 9], [1220, 0.25, 8], [740, 0.5, 10], [645, 0.9, 12]],
+    [[2950, '2962 C–H', 0], [1465, '1465', 0], [1265, '1265', 14], [645, '645 C–Br', 0]]);
+  massSpectrum($('w-ms'), [[57, 100], [41, 69], [29, 55.8], [27, 49.9], [28, 21.1], [39, 19.9], [56, 16.7], [26, 12], [55, 7.4], [15, 6.5], [136, 5.1], [138, 5.0], [43, 4.4], [58, 4.4]], 150,
+    [[57, '57'], [41, '41'], [29, '29'], [136, '136', 12], [138, '138', 0]]);
+
+  // practice compound 2: 2-methylpropan-1-ol (C4H10O)
+  protonSpectrum($('t-h'), [
+    { ppm: 3.40, n: 1, J: 6.5, H: 2, label: '3.40' },
+    { ppm: 2.10, n: 0, H: 1, label: '2.1 br', broad: true },
+    { ppm: 1.77, n: 8, J: 6.6, H: 1, label: '1.77' },
+    { ppm: 0.92, n: 1, J: 6.7, H: 6, label: '0.92' }
+  ], 4.5, 0);
+  carbonSpectrum($('t-c'), [{ ppm: 69.5, H: 2 }, { ppm: 30.8, H: 1 }, { ppm: 19.0, H: 3 }], 80);
+  irSpectrum($('t-ir'), [[3335, 1.0, 120], [2958, 1.0, 14], [2930, 0.55, 12], [2873, 0.6, 12], [1470, 0.45, 10], [1380, 0.3, 8], [1366, 0.25, 8], [1041, 1.1, 14], [990, 0.35, 10], [815, 0.2, 10]],
+    [[3335, '3335 O–H', 0], [2958, '2958', 18], [1470, '1470', 0], [1041, '1041 C–O', 0]]);
+  massSpectrum($('t-ms'), [[43, 100], [41, 76.9], [42, 62.2], [31, 37.6], [33, 31.7], [39, 28], [27, 22], [29, 14.8], [74, 14.1], [55, 9.9], [56, 8.2], [57, 7.9], [40, 5.1], [59, 4.6]], 90,
+    [[43, '43'], [31, '31'], [56, '56', 0], [74, '74', 0]]);
+
+  // ---- worked example, a step at a time ----
+  var steps = Array.prototype.slice.call(document.querySelectorAll('#walk li'));
+  function shown() { return steps.filter(function (li) { return !li.hidden; }).length; }
+  function updateWalk() { var all = shown() === steps.length; $('walk-next').hidden = all; $('walk-all').hidden = all; }
+  $('walk-next').addEventListener('click', function () { var i = shown(); if (i < steps.length) steps[i].hidden = false; updateWalk(); });
+  $('walk-all').addEventListener('click', function () { steps.forEach(function (li) { li.hidden = false; }); updateWalk(); });
+
+  // ---- questions ----
+  function buildQuiz(list, host, onScore) {
+    var state = list.map(function () { return null; });
+    list.forEach(function (q, qi) {
+      var li = el('li', 'q');
+      var text = el('p', 'q-text', q.q); text.id = host.id + '-q' + qi;
+      li.appendChild(text);
+      var opts = el('div', 'options'); opts.setAttribute('role', 'group'); opts.setAttribute('aria-labelledby', text.id);
+      var fb = el('p', 'feedback'); fb.setAttribute('aria-live', 'polite');
+      q.options.forEach(function (o, oi) {
+        var btn = el('button', null, o); btn.type = 'button';
+        btn.addEventListener('click', function () {
+          state[qi] = oi === q.answer;
+          Array.prototype.forEach.call(opts.children, function (other, j) { other.removeAttribute('data-state'); other.setAttribute('aria-pressed', j === oi ? 'true' : 'false'); });
+          btn.setAttribute('data-state', state[qi] ? 'right' : 'wrong');
+          fb.textContent = '';
+          fb.appendChild(el('b', state[qi] ? 'right' : 'wrong', state[qi] ? 'Right. ' : 'Not quite. '));
+          fb.appendChild(document.createTextNode(state[qi] ? q.why : (q.hint || 'Try another answer.')));
+          onScore(state);
+        });
+        opts.appendChild(btn);
+      });
+      li.appendChild(opts);
+      li.appendChild(fb);
+      host.appendChild(li);
+    });
+  }
+
+  var TURN = [
+    { q: 'How many degrees of unsaturation does C₄H₁₀O have?', options: ['0', '1', '2', '4'], answer: 0,
+      why: '4 − 10/2 + 1 = 0. No ring and no double bond, so no C=O: the oxygen is in an alcohol or an ether.', hint: 'Use C − (H + X)/2 + N/2 + 1, and leave the O out.' },
+    { q: 'The IR has a strong, broad band near 3335 cm⁻¹ and a strong band near 1041 cm⁻¹. With the D₂O result, the compound is…', options: ['an ether', 'an alcohol', 'a ketone', 'an amine'], answer: 1,
+      why: 'A broad O–H stretch, a C–O stretch, and a signal that vanished with D₂O: an alcohol. An ether has the C–O but no O–H.', hint: 'Which group has a broad band above 3200 and an H that D₂O can replace?' },
+    { q: 'The ¹³C spectrum has 3 lines for 4 carbons. What does that tell you?', options: ['One carbon has no H', 'Two carbons are equivalent', 'The sample is impure', 'One line is the solvent'], answer: 1,
+      why: 'Symmetry: two of the carbons are identical and give one line. The DEPT shows them as CH₃ (19.0, up), so two CH₃ groups are equivalent.', hint: 'Fewer lines than carbons means something is repeated.' },
+    { q: 'The DEPT-135 shows 69.5 pointing down, 30.8 up and 19.0 up. Which carbons are they?', options: ['CH₃, CH₂, CH₂', 'CH₂–O, CH, CH₃', 'C–O with no H, CH₂, CH₃', 'CH–O, CH₂, CH₃'], answer: 1,
+      why: 'Down is CH₂, and at 69.5 it is on the oxygen. 30.8 is up and too far right for a CH₃ on O: a CH. 19.0 is the two equivalent CH₃.', hint: 'Down means CH₂; up means CH or CH₃. Which of them is on the O (50–90 ppm)?' },
+    { q: 'The 6H signal at 0.92 is a doublet. What does that say?', options: ['Six H beside two H', 'Two equivalent CH₃ beside one H', 'A tert-butyl group', 'Three CH₂ groups'], answer: 1,
+      why: 'Six H that are all alike, split into two lines by one neighbour: two CH₃ groups on the same CH, the pattern of an isopropyl-type branch.', hint: 'A doublet means one neighbouring H.' },
+    { q: 'Which isomer of C₄H₁₀O fits every spectrum?', options: ['butan-1-ol, CH₃CH₂CH₂CH₂OH', 'butan-2-ol, CH₃CH₂CH(OH)CH₃', '2-methylpropan-1-ol, (CH₃)₂CHCH₂OH', '2-methylpropan-2-ol, (CH₃)₃COH', 'diethyl ether, CH₃CH₂OCH₂CH₃'], answer: 2,
+      why: 'Two equivalent CH₃ on a CH (the 6H doublet), a CH₂ on O split by that same CH (the 2H doublet at 3.40), and an OH. Butan-1-ol would have 4 lines in its ¹³C; butan-2-ol a CH–O near 69 pointing up; the tert-butyl alcohol a 9H singlet; the ether no O–H.',
+      hint: 'Check each against the 6H doublet, the 2H doublet at 3.40 and the three ¹³C lines.' }
+  ];
+  buildQuiz(TURN, $('turn-quiz'), function (state) { if (state[TURN.length - 1] === true) $('turn-reveal').hidden = false; });
+
+  var QUESTIONS = [
+    { q: 'How many degrees of unsaturation does C₉H₁₂ have?', options: ['2', '3', '4', '5'], answer: 2,
+      why: '9 − 12/2 + 1 = 4: most likely a benzene ring (one ring and three C=C) with no other π bond.' },
+    { q: 'Why is the sample dissolved in CDCl₃ rather than CHCl₃?', options: ['It dissolves more compounds', 'Its deuterium gives no ¹H signal, and the spectrometer locks on it', 'It makes the peaks taller', 'It boils at a higher temperature'], answer: 1,
+      why: 'Ordinary chloroform would give a huge ¹H peak; deuterium gives none, and the lock uses its signal to hold the field steady.' },
+    { q: 'You record 16 scans and the spectrum is noisy. How many scans make it twice as clean?', options: ['32', '64', '160', '256'], answer: 1,
+      why: 'The signal grows with the number of scans, the noise with its square root: four times the scans, twice as clean.' },
+    { q: 'A 3H signal is a triplet. How many H are on the neighbouring carbon(s)?', options: ['1', '2', '3', '4'], answer: 1,
+      why: 'n + 1 = 3 lines, so n = 2: a CH₃ beside a CH₂, as in an ethyl group.' },
+    { q: 'A ¹H signal at 9.8 ppm, a single line for 1H, most likely belongs to…', options: ['an aldehyde H', 'a benzene ring H', 'an alcohol O–H', 'a CH₃ on oxygen'], answer: 0,
+      why: 'Aldehyde H appear at 9.5–10.1 ppm. The IR would show a C=O and two weak C–H bands near 2720 and 2820.' },
+    { q: 'In DEPT-135, a peak points down. The carbon is…', options: ['a CH₃', 'a CH₂', 'a CH', 'a carbon with no H'], answer: 1,
+      why: 'CH₂ points down; CH and CH₃ point up; carbons with no H do not appear.' },
+    { q: 'The IR shows a strong, sharp band at 1715 cm⁻¹ and nothing above 3100. The compound has…', options: ['an O–H', 'a C=O and no O–H or N–H', 'a C≡N', 'a benzene ring and nothing else'], answer: 1,
+      why: 'A strong band near 1715 is a C=O; with nothing broad above 3100 there is no O–H or N–H.' },
+    { q: 'The mass spectrum shows M⁺ at 140 and an M+2 peak about one third as tall. What does that suggest?', options: ['One Br', 'One Cl', 'One N', 'Nothing: M+2 is always one third'], answer: 1,
+      why: '³⁵Cl and ³⁷Cl are about 3 : 1, so one Cl gives an M+2 about a third of M⁺. One Br would give two peaks of about equal height.' },
+    { q: 'M⁺ is at m/z 87. What does the nitrogen rule say?', options: ['No nitrogen', 'An odd number of N atoms, most likely one', 'Two N atoms', 'It contains a halogen'], answer: 1,
+      why: 'An odd molar mass means an odd number of nitrogen atoms. Compounds of C, H, O and halogens have even molar masses.' },
+    { q: 'A spectrum was never referenced. What goes wrong?', options: ['Nothing: the page fixes it', 'The integrals are wrong', 'Every chemical shift is off by the same amount', 'The splitting changes'], answer: 2,
+      why: 'Shifts are measured from TMS at 0.00 ppm. Off by 0.1 ppm, every shift you report is off by 0.1 ppm too, though the splittings and integrals are unchanged.' }
+  ];
+  buildQuiz(QUESTIONS, $('quiz'), function (state) {
+    var answered = state.filter(function (s) { return s !== null; }).length;
+    var right = state.filter(function (s) { return s === true; }).length;
+    var out = $('score');
+    out.textContent = '';
+    if (!answered) return;
+    if (right === QUESTIONS.length) { out.appendChild(el('span', 'done', 'All ' + right + ' right. You are ready for the lab.')); return; }
+    out.textContent = right + ' of ' + QUESTIONS.length + ' right so far.';
+  });
+})();
+</script>
+</body>
+</html>
