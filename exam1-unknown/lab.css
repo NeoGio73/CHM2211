@@ -492,6 +492,8 @@ select[data-state] { background-position: right 22px center; }
 .lock-display { max-width: 720px; }
 #lock-canvas { display: block; width: 100%; height: auto; border-radius: 6px; background: #0d1a14; }
 .lock-readout { margin: 6px 0 0; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--ink-soft); }
+/* the lock level: large, bold and red, so it can be read at a glance */
+.lock-level { margin-left: 2px; font-size: 1.6em; font-weight: 800; line-height: 1; color: var(--flag); vertical-align: -0.08em; }
 
 .tab-panel { padding: 12px 14px 16px; }
 .tab-panel[hidden] { display: none; }

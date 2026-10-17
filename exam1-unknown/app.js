@@ -376,11 +376,23 @@
       if (x === 0) g.moveTo(x, y); else g.lineTo(x, y);
     }
     g.stroke();
-    var text;
-    if (lockShown.locked) text = 'Locked on ' + state.spectro.solvent + ' · lock level ' + Math.round(lockShown.level);
+    var text, level = null;
+    if (lockShown.locked) { level = String(Math.round(lockShown.level)); text = 'Locked on ' + state.spectro.solvent + ' · lock level '; }
     else if (lockShown.searching) text = 'Searching for the deuterium signal…';
     else text = inMagnet() ? 'Lock off: the field is sweeping' : 'Lock off: no sample in the magnet';
-    $('lock-readout').textContent = text;
+    // the level itself stands out, large and red, for anyone who finds small print hard to read;
+    // the line is rebuilt only when it changes, since this runs on every frame
+    var readout = $('lock-readout'), key = text + (level || '');
+    if (readout.getAttribute('data-shown') !== key) {
+      readout.setAttribute('data-shown', key);
+      readout.textContent = text;
+      if (level !== null) {
+        var num = document.createElement('span');
+        num.className = 'lock-level';
+        num.textContent = level;
+        readout.appendChild(num);
+      }
+    }
   }
 
   // ---- Shims ---------------------------------------------------------------------------------------------
