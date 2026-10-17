@@ -58,6 +58,7 @@
       nextId: 1,
       routine: 'nmr',               // which list of steps is shown beside the room
       sound: true,                  // the lift air's sound
+      software: false,              // the spectrometer software has been opened: the room's monitor shows its status
       ir: null,                     // the last IR spectrum: { from, step, background, sample, t }
       irView: null, irBands: false, irThreshold: 10,
       gc: null,                     // the last GC-MS run: { seed, done } (its chromatogram is asked for again after a reload)
@@ -126,7 +127,8 @@
       shims: state.spectro.shims || [],
       intro: params.get('intro') !== '0' && !calm && !workUnderWay(),
       calm: calm,
-      view: state.routine !== 'nmr' ? ROUTINE_VIEW[state.routine] : (workUnderWay() ? 'prep' : '')
+      view: state.routine !== 'nmr' ? ROUTINE_VIEW[state.routine] : (workUnderWay() ? 'prep' : ''),
+      software: !!state.software
     }));
   }
 
@@ -336,6 +338,27 @@
   // ---- Lock ----------------------------------------------------------------------------------------------
 
   var lockShown = { locked: false, searching: false, level: 0, target: 0 };
+
+  /**
+   * The spectrometer software is "opened" by a click on the room's monitor, or by using it here:
+   * from then on the monitor shows the live status instead of the workstation's login screen.
+   * A click on the monitor also brings the software into view.
+   */
+  function openSoftware(bringIntoView) {
+    if (!state.software) {
+      state.software = true;
+      sendBench('SetScreen', 'status');
+      saveState();
+    }
+    if (bringIntoView) $('part-spectrometer').scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'start' });
+  }
+
+  function bindSoftware() {
+    // using the software here opens it too (a tab, a button, a slider)
+    ['pointerdown', 'click', 'keydown', 'input', 'change'].forEach(function (type) {
+      $('console').addEventListener(type, function () { openSoftware(false); }, true);
+    });
+  }
 
   function bindLock() {
     var sel = $('lock-solvent');
@@ -1720,6 +1743,10 @@
         consoleStatus();
         saveState();
         break;
+      case 'clicked':
+        // a click on the monitor in the room opens the spectrometer software (part 3)
+        if (msg.item === 'console') openSoftware(true);
+        break;
       case 'blocked':
         blockedSeen = true;
         note(M.reasonText(msg.reason), 'warn');
@@ -1913,6 +1940,7 @@
   TABS.forEach(function (t) { $('tab-' + t).addEventListener('click', function () { showTab(t); }); });
   bindRoutine();
   bindLock();
+  bindSoftware();
   buildShims();
   bindAcquire();
   bindProcess();
