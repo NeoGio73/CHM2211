@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Exam 1 Unknown</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2317211e'/%3E%3Cpath d='M3 25 H8 L9 22 L10 25 H13 L14 9 L15 25 H18 L19 17 L20 25 H23 L24 21 L25 25 H29' stroke='%236fa8ff' stroke-width='1.6' fill='none'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="lab.css">
+</head>
+<body>
+<main class="sheet">
+
+  <header class="masthead">
+    <h1>Exam 1 Unknown</h1>
+    <p class="unknown-tag">Unknown <span id="unknown-code" class="code">&nbsp;</span>
+      <span class="formula-tag">Formula <span id="formula" class="formula">&nbsp;</span></span></p>
+    <p class="print-header" aria-hidden="true"><span id="print-name"></span><span id="print-date"></span></p>
+  </header>
+
+  <section class="part" id="part-sample" aria-labelledby="sample-title">
+    <h2 id="sample-title"><span class="step" aria-hidden="true">1</span>At the bench</h2>
+    <p class="lede">Your unknown is on the bench three times over: in the vial on the left, to make up the NMR sample; pure, in a small vial beside the IR; and dissolved in dichloromethane, in a GC vial in front of the GC-MS. Work in the room itself (click a thing to pick it up, then click where it goes) or with the buttons beside it.</p>
+
+    <div class="bench-layout">
+      <div class="stage-column">
+        <div class="stage" id="stage">
+          <canvas id="unity-canvas" tabindex="-1" aria-label="3D NMR room: a bench shaped like a C with the things for making up a sample, the spectrometer's computer, an IR and a GC-MS, and the magnet beside it"></canvas>
+          <div class="stage-cover" id="stage-cover">
+            <p id="stage-status">Setting up the room</p>
+            <div class="progress" aria-hidden="true"><div class="progress-fill" id="progress-fill"></div></div>
+          </div>
+        </div>
+        <p class="stage-note" id="stage-note" role="status"></p>
+        <p class="stage-tip">Tip: turn your phone sideways for a bigger room.</p>
+        <div class="stage-controls">
+          <div class="views" role="group" aria-label="Camera view">
+            <button type="button" class="view-button" data-view="room" aria-pressed="true">Room</button>
+            <button type="button" class="view-button" data-view="prep" aria-pressed="false">Sample</button>
+            <button type="button" class="view-button" data-view="gauge" aria-pressed="false">Depth gauge</button>
+            <button type="button" class="view-button" data-view="console" aria-pressed="false">Computer</button>
+            <button type="button" class="view-button" data-view="ir" aria-pressed="false">IR</button>
+            <button type="button" class="view-button" data-view="ms" aria-pressed="false">GC-MS</button>
+            <button type="button" class="view-button" data-view="magnet" aria-pressed="false">Magnet</button>
+            <button type="button" class="view-button" data-view="top" aria-pressed="false">Top of the magnet</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="routine-column">
+        <div class="routine-tabs" role="tablist" aria-label="What you are doing at the bench">
+          <button type="button" role="tab" class="routine-tab" id="rtab-nmr" aria-controls="routine" aria-selected="true">NMR sample</button>
+          <button type="button" role="tab" class="routine-tab" id="rtab-ir" aria-controls="routine-ir" aria-selected="false">IR</button>
+          <button type="button" role="tab" class="routine-tab" id="rtab-ms" aria-controls="routine-ms" aria-selected="false">GC-MS</button>
+        </div>
+        <ol class="routine" id="routine" role="tabpanel" aria-labelledby="rtab-nmr">
+          <li class="routine-step" data-done="solvent">
+            <span class="routine-name">CDCl&#8323; into the vial <span class="soft">(about 0.6 mL)</span></span>
+            <span class="routine-buttons"><button type="button" class="quiet-button" data-steps="take solvent|use vial">Add a pipetful</button></span>
+            <span class="routine-state" id="state-solvent"></span>
+          </li>
+          <li class="routine-step" data-done="dissolved">
+            <span class="routine-name">Dissolve the unknown</span>
+            <span class="routine-buttons"><button type="button" class="quiet-button" data-steps="swirl">Swirl the vial</button></span>
+            <span class="routine-state" id="state-dissolved"></span>
+          </li>
+          <li class="routine-step" data-done="tube">
+            <span class="routine-name">Into an NMR tube</span>
+            <span class="routine-buttons"><button type="button" class="quiet-button" data-steps="take pipet|use vial|use tube">Fill a tube with a clean pipet</button></span>
+            <span class="routine-state" id="state-tube"></span>
+          </li>
+          <li class="routine-step" data-done="capped">
+            <span class="routine-name">Cap it</span>
+            <span class="routine-buttons"><button type="button" class="quiet-button" data-steps="take cap|use tube">Cap the tube</button></span>
+            <span class="routine-state" id="state-capped"></span>
+          </li>
+          <li class="routine-step" data-done="spinner">
+            <span class="routine-name">Into the spinner</span>
+            <span class="routine-buttons"><button type="button" class="quiet-button" data-steps="take tube|use holder">Push the tube into the spinner</button></span>
+            <span class="routine-state" id="state-spinner"></span>
+          </li>
+          <li class="routine-step" data-done="depth">
+            <span class="routine-name">Set the depth</span>
+            <span class="routine-buttons">
+              <button type="button" class="quiet-button" data-steps="take spinner|use gauge">Put the spinner on the gauge</button>
+              <span class="depth-buttons" id="depth-buttons" role="group" aria-label="Move the tube through the spinner">
+                <button type="button" class="quiet-button" data-steps="depth -0.5" aria-label="Pull the tube up 5 millimetres">&uarr; 5 mm</button>
+                <button type="button" class="quiet-button" data-steps="depth -0.1" aria-label="Pull the tube up 1 millimetre">&uarr; 1 mm</button>
+                <button type="button" class="quiet-button" data-steps="depth 0.1" aria-label="Push the tube down 1 millimetre">&darr; 1 mm</button>
+                <button type="button" class="quiet-button" data-steps="depth 0.5" aria-label="Push the tube down 5 millimetres">&darr; 5 mm</button>
+              </span>
+            </span>
+            <span class="routine-state" id="state-depth"></span>
+          </li>
+          <li class="routine-step" data-done="air">
+            <span class="routine-name">Lift air at the magnet</span>
+            <span class="routine-buttons"><button type="button" class="quiet-button toggle" id="air-button" aria-pressed="false">LIFT</button></span>
+            <span class="routine-state" id="state-air"></span>
+          </li>
+          <li class="routine-step" data-done="standard">
+            <span class="routine-name">The standard sample</span>
+            <span class="routine-buttons"><button type="button" class="quiet-button" data-steps="standard">Take it off the air</button></span>
+            <span class="routine-state" id="state-standard"></span>
+          </li>
+          <li class="routine-step" data-done="magnet">
+            <span class="routine-name">Your sample into the magnet</span>
+            <span class="routine-buttons">
+              <button type="button" class="quiet-button" data-steps="take spinner|use inlet">Set it on the air</button>
+              <button type="button" class="quiet-button" data-steps="take spinner|use holder">Take it back to the bench</button>
+            </span>
+            <span class="routine-state" id="state-magnet"></span>
+          </li>
+          <li class="routine-step optional" data-done="d2o">
+            <span class="routine-name">The D&#8322;O shake <span class="soft">(optional: which peaks are OH or NH?)</span></span>
+            <span class="routine-buttons">
+              <button type="button" class="quiet-button" data-steps="untube">Tube out of the spinner</button>
+              <button type="button" class="quiet-button" data-steps="uncap">Uncap it</button>
+              <button type="button" class="quiet-button" data-steps="take d2o|use tube">Add a drop of D&#8322;O</button>
+              <button type="button" class="quiet-button" data-steps="shake">Shake it</button>
+            </span>
+            <span class="routine-state" id="state-d2o"></span>
+          </li>
+        </ol>
+
+        <ol class="routine" id="routine-ir" role="tabpanel" aria-labelledby="rtab-ir" hidden>
+          <li class="routine-step" data-done="ir-clean">
+            <span class="routine-name">A clean crystal</span>
+            <span class="routine-buttons"><button type="button" class="quiet-button" data-steps="ir clean">Wipe it with acetone</button></span>
+            <span class="routine-state" id="state-ir-clean"></span>
+          </li>
+          <li class="routine-step" data-done="ir-background">
+            <span class="routine-name">A background, with nothing on the crystal</span>
+            <span class="routine-buttons"><button type="button" class="quiet-button" data-steps="ir background">Record the background</button></span>
+            <span class="routine-state" id="state-ir-background"></span>
+          </li>
+          <li class="routine-step" data-done="ir-sample">
+            <span class="routine-name">Your unknown on the crystal</span>
+            <span class="routine-buttons"><button type="button" class="quiet-button" data-steps="take irvial|use atr">Put a little on the crystal</button></span>
+            <span class="routine-state" id="state-ir-sample"></span>
+          </li>
+          <li class="routine-step" data-done="ir-clamp">
+            <span class="routine-name">Clamp it down <span class="soft">(for a solid)</span></span>
+            <span class="routine-buttons"><button type="button" class="quiet-button toggle" id="clamp-button" data-steps="ir clamp" aria-pressed="false">Clamp</button></span>
+            <span class="routine-state" id="state-ir-clamp"></span>
+          </li>
+          <li class="routine-step" data-done="ir-record">
+            <span class="routine-name">Record the spectrum <span class="soft">(it appears in part 5)</span></span>
+            <span class="routine-buttons"><button type="button" class="quiet-button" data-steps="ir record">Record</button></span>
+            <span class="routine-state" id="state-ir-record"></span>
+          </li>
+        </ol>
+
+        <ol class="routine" id="routine-ms" role="tabpanel" aria-labelledby="rtab-ms" hidden>
+          <li class="routine-step" data-done="gc-fill">
+            <span class="routine-name">1 µL from the GC vial into the syringe</span>
+            <span class="routine-buttons"><button type="button" class="quiet-button" data-steps="take syringe|use gcvial">Fill the syringe</button></span>
+            <span class="routine-state" id="state-gc-fill"></span>
+          </li>
+          <li class="routine-step" data-done="gc-inject">
+            <span class="routine-name">Inject it: the run starts <span class="soft">(the chromatogram is in part 6)</span></span>
+            <span class="routine-buttons"><button type="button" class="quiet-button" data-steps="use port">Inject</button></span>
+            <span class="routine-state" id="state-gc-inject"></span>
+          </li>
+        </ol>
+        <p class="routine-aside" id="ms-aside" hidden>The GC vial was made up for you: a little of your unknown dissolved in dichloromethane. A run takes 18 minutes on a real GC-MS; here it takes about 40 seconds.</p>
+        <p class="held-note" id="held-note" role="status"></p>
+        <div class="routine-foot">
+          <button type="button" class="quiet-button" id="put-down" data-steps="putback">Put down what you are holding</button>
+          <div class="reset-wrap">
+            <button type="button" class="quiet-button" id="reset-sample">Start the sample again</button>
+            <div class="confirm" id="reset-confirm" hidden>
+              <span>Start again with a clean tube? The spectra you recorded stay.</span>
+              <button type="button" class="quiet-button danger" id="reset-yes">Start again</button>
+              <button type="button" class="quiet-button" id="reset-no">Keep going</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="part" id="part-formula" aria-labelledby="formula-title">
+    <h2 id="formula-title"><span class="step" aria-hidden="true">2</span>The formula</h2>
+    <p class="lede">Your unknown's molecular formula is <span class="formula" id="formula-again">&nbsp;</span>. Before you look at a spectrum, work out how many rings and double bonds it must have.</p>
+    <div class="field dou-field">
+      <label class="field-name" for="dou">Degrees of unsaturation</label>
+      <input type="text" id="dou" inputmode="numeric" autocomplete="off">
+      <span class="msg" id="dou-msg" aria-live="polite"></span>
+    </div>
+  </section>
+
+  <section class="part" id="part-spectrometer" aria-labelledby="spectrometer-title">
+    <h2 id="spectrometer-title"><span class="step" aria-hidden="true">3</span>The spectrometer</h2>
+    <p class="lede">This is the spectrometer's software, as on the computer beside the magnet. Lock on the solvent's deuterium, shim until the lock level is as high as you can get it, record your spectra, then process them: Fourier transform, phase, baseline, reference, and pick peaks and integrate.</p>
+
+    <div class="console" id="console">
+      <div class="tabs" role="tablist" aria-label="Spectrometer">
+        <button type="button" role="tab" class="tab" id="tab-lock" aria-controls="panel-lock" aria-selected="true">Lock</button>
+        <button type="button" role="tab" class="tab" id="tab-shim" aria-controls="panel-shim" aria-selected="false">Shim</button>
+        <button type="button" role="tab" class="tab" id="tab-acquire" aria-controls="panel-acquire" aria-selected="false">Acquire</button>
+        <button type="button" role="tab" class="tab" id="tab-process" aria-controls="panel-process" aria-selected="false">Process</button>
+        <span class="console-status" id="console-status" role="status"></span>
+      </div>
+
+      <div class="lock-area" id="lock-area">
+        <div class="lock-display">
+          <canvas id="lock-canvas" width="720" height="200" aria-label="Lock display: the deuterium signal of the solvent"></canvas>
+          <p class="lock-readout" id="lock-readout">Lock off</p>
+        </div>
+      </div>
+
+      <div class="tab-panel" role="tabpanel" id="panel-lock" aria-labelledby="tab-lock">
+        <div class="panel-row">
+          <label class="field-name" for="lock-solvent">Solvent</label>
+          <select id="lock-solvent"></select>
+          <button type="button" class="primary-button" id="lock-button">Lock</button>
+          <button type="button" class="quiet-button" id="unlock-button">Lock off</button>
+        </div>
+        <p class="panel-msg" id="lock-msg" role="status"></p>
+      </div>
+
+      <div class="tab-panel" role="tabpanel" id="panel-shim" aria-labelledby="tab-shim" hidden>
+        <p class="panel-intro">Turn each shim until the lock level stops rising, then go round again: they affect each other. Z1 and Z2 matter most.</p>
+        <div class="shims" id="shims"></div>
+        <p class="panel-msg" id="shim-msg" role="status"></p>
+      </div>
+
+      <div class="tab-panel" role="tabpanel" id="panel-acquire" aria-labelledby="tab-acquire" hidden>
+        <div class="panel-row">
+          <span class="field-name">Experiment</span>
+          <span class="experiments" id="experiments" role="radiogroup" aria-label="Experiment"></span>
+        </div>
+        <div class="panel-row">
+          <label class="field-name" for="scans">Scans</label>
+          <select id="scans"></select>
+          <label class="field-name" for="gain">Receiver gain</label>
+          <input type="number" id="gain" min="1" max="256" step="1" value="32">
+          <button type="button" class="quiet-button" id="auto-gain">Automatic gain</button>
+        </div>
+        <div class="panel-row">
+          <button type="button" class="primary-button" id="acquire-start">Record</button>
+          <button type="button" class="quiet-button" id="acquire-stop" disabled>Stop</button>
+          <div class="acq-progress" aria-hidden="true"><div class="acq-fill" id="acq-fill"></div></div>
+          <span class="acq-text" id="acq-text"></span>
+        </div>
+        <p class="panel-msg" id="acquire-msg" role="status"></p>
+      </div>
+
+      <div class="tab-panel" role="tabpanel" id="panel-process" aria-labelledby="tab-process" hidden>
+        <div class="panel-row datasets" id="datasets" role="group" aria-label="Spectrum"></div>
+        <div class="toolbar" id="toolbar">
+          <div class="tool-group">
+            <button type="button" class="quiet-button" id="do-ft">Fourier transform</button>
+            <label class="small-field">LB <input type="number" id="lb" step="0.1" min="0" max="10" value="0.3"> Hz</label>
+          </div>
+          <div class="tool-group">
+            <button type="button" class="quiet-button" id="do-autophase">Automatic phase</button>
+            <label class="small-field">ph0 <input type="range" id="ph0" min="-180" max="180" step="0.5" value="0"> <input type="number" id="ph0-num" step="0.5" value="0"></label>
+            <label class="small-field">ph1 <input type="range" id="ph1" min="-180" max="180" step="0.5" value="0"> <input type="number" id="ph1-num" step="0.5" value="0"></label>
+          </div>
+          <div class="tool-group">
+            <button type="button" class="quiet-button toggle" id="do-baseline" aria-pressed="false">Baseline correction</button>
+          </div>
+          <div class="tool-group">
+            <label class="small-field">Reference <select id="ref-line"></select></label>
+            <button type="button" class="quiet-button toggle" id="mode-ref" aria-pressed="false">Click its peak</button>
+          </div>
+          <div class="tool-group">
+            <button type="button" class="quiet-button toggle" id="mode-int" aria-pressed="false">Integrate</button>
+            <button type="button" class="quiet-button" id="clear-int">Clear integrals</button>
+          </div>
+          <div class="tool-group">
+            <button type="button" class="quiet-button toggle" id="do-peaks" aria-pressed="false">Pick peaks</button>
+            <label class="small-field">above <input type="range" id="threshold" min="1" max="60" step="1" value="8"> %</label>
+          </div>
+          <div class="tool-group">
+            <button type="button" class="quiet-button" id="full-view">Full view</button>
+            <button type="button" class="quiet-button" id="taller" aria-label="Make the peaks taller">Taller</button>
+            <button type="button" class="quiet-button" id="shorter" aria-label="Make the peaks shorter">Shorter</button>
+          </div>
+        </div>
+        <div class="spectrum-wrap">
+          <canvas id="spec-canvas" width="1200" height="440" aria-label="The spectrum"></canvas>
+        </div>
+        <p class="spec-readout" id="spec-readout" role="status">&nbsp;</p>
+        <div class="int-edit" id="int-edit" hidden>
+          <label>This integral stands for <input type="text" id="int-value" inputmode="decimal" autocomplete="off"> H</label>
+          <button type="button" class="quiet-button" id="int-set">Set</button>
+          <button type="button" class="quiet-button" id="int-remove">Remove it</button>
+        </div>
+        <p class="panel-msg" id="process-msg" role="status"></p>
+        <p class="panel-intro">Drag across the spectrum to zoom in; double-click for the whole spectrum. With <em>Integrate</em> on, drag across a group of peaks to measure its area; click an integral's number to say how many H it stands for.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="part" id="part-readings" aria-labelledby="readings-title">
+    <h2 id="readings-title"><span class="step" aria-hidden="true">4</span>What the spectra show</h2>
+    <p class="lede">Read every signal of your compound off your processed, referenced spectra. Give &#948; to two decimals for &sup1;H and one for &sup1;&sup3;C, scale your integrals so that they add up to the H in the formula, and say which part of the molecule you think each signal comes from. Leave out the solvent, water and TMS.</p>
+
+    <div class="table-block">
+      <table class="data-table readings-table" id="h-table">
+        <caption>Table 1. &sup1;H NMR (400 MHz, CDCl&#8323;)</caption>
+        <thead>
+          <tr><th scope="col" class="col-shift">&#948; <span class="unit">(ppm)</span></th><th scope="col" class="col-mult">Splitting</th><th scope="col" class="col-j"><i>J</i> <span class="unit">(Hz)</span></th><th scope="col" class="col-n">H</th><th scope="col">Which H <span class="unit">(your assignment)</span></th><th scope="col" class="col-x"><span class="visually-hidden">Remove</span></th></tr>
+        </thead>
+        <tbody id="h-rows"></tbody>
+      </table>
+      <div class="table-foot">
+        <button type="button" class="quiet-button" id="h-add">Add a row</button>
+        <p class="msg" id="h-msg" aria-live="polite"></p>
+      </div>
+      <p class="table-status" id="h-status"></p>
+    </div>
+
+    <div class="table-block">
+      <table class="data-table readings-table" id="c-table">
+        <caption>Table 2. &sup1;&sup3;C NMR (101 MHz, CDCl&#8323;) and DEPT-135</caption>
+        <thead>
+          <tr><th scope="col" class="col-shift">&#948; <span class="unit">(ppm)</span></th><th scope="col" class="col-type">DEPT-135 shows</th><th scope="col">Which C <span class="unit">(your assignment)</span></th><th scope="col" class="col-x"><span class="visually-hidden">Remove</span></th></tr>
+        </thead>
+        <tbody id="c-rows"></tbody>
+      </table>
+      <div class="table-foot">
+        <button type="button" class="quiet-button" id="c-add">Add a row</button>
+        <p class="msg" id="c-msg" aria-live="polite"></p>
+      </div>
+      <p class="table-status" id="c-status"></p>
+    </div>
+  </section>
+
+  <section class="part" id="part-ir" aria-labelledby="ir-title">
+    <h2 id="ir-title"><span class="step" aria-hidden="true">5</span>The IR spectrum</h2>
+    <p class="lede">This is the IR's software. Record a background with the crystal clean and nothing on it, then put your unknown on the crystal (part 1, the IR tab) and record its spectrum. Each dip is a band, where bonds in your compound absorb the infrared light. Read the bands that tell you which bonds are there.</p>
+
+    <div class="instrument" id="ir-panel">
+      <div class="panel-row">
+        <button type="button" class="quiet-button" data-steps="ir background">Record the background</button>
+        <button type="button" class="primary-button" data-steps="ir record">Record the spectrum</button>
+      </div>
+      <p class="panel-msg" id="ir-status" role="status"></p>
+      <div class="toolbar">
+        <div class="tool-group">
+          <button type="button" class="quiet-button toggle" id="ir-bands" aria-pressed="false">Label the bands</button>
+          <label class="small-field">at least <input type="range" id="ir-threshold" min="2" max="60" step="1" value="10"> % as deep as the deepest</label>
+        </div>
+        <div class="tool-group">
+          <button type="button" class="quiet-button" id="ir-full">Full view</button>
+        </div>
+      </div>
+      <div class="spectrum-wrap">
+        <canvas id="ir-canvas" class="chart" width="1200" height="420" aria-label="The IR spectrum: transmittance against wavenumber"></canvas>
+      </div>
+      <p class="spec-readout" id="ir-readout" role="status">&nbsp;</p>
+      <p class="panel-intro">Drag across the spectrum to zoom in; double-click for the whole spectrum.</p>
+    </div>
+
+    <div class="table-block">
+      <table class="data-table readings-table" id="ir-table">
+        <caption>Table 3. IR (ATR, the pure compound)</caption>
+        <thead>
+          <tr><th scope="col" class="col-shift">Band <span class="unit">(cm&#8315;&sup1;)</span></th><th scope="col" class="col-strength">How strong</th><th scope="col" class="col-strength">Shape</th><th scope="col">Which bond <span class="unit">(your assignment)</span></th><th scope="col" class="col-x"><span class="visually-hidden">Remove</span></th></tr>
+        </thead>
+        <tbody id="ir-rows"></tbody>
+      </table>
+      <div class="table-foot">
+        <button type="button" class="quiet-button" id="ir-add">Add a row</button>
+        <p class="msg" id="ir-msg" aria-live="polite"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="part" id="part-ms" aria-labelledby="ms-title">
+    <h2 id="ms-title"><span class="step" aria-hidden="true">6</span>The mass spectrum</h2>
+    <p class="lede">The gas chromatograph separates what was injected; as each compound leaves the column, the mass spectrometer strikes it with electrons (70 eV) and sorts the ions by mass. Inject your sample (part 1, the GC-MS tab) and the chromatogram builds up below. Then click the top of your compound's peak to see its mass spectrum.</p>
+
+    <div class="instrument" id="ms-panel">
+      <p class="panel-msg" id="gc-status" role="status"></p>
+      <div class="spectrum-wrap">
+        <canvas id="tic-canvas" class="chart" width="1200" height="260" aria-label="The chromatogram: the total ion current against time"></canvas>
+      </div>
+      <p class="spec-readout" id="tic-readout" role="status">&nbsp;</p>
+      <div class="spectrum-wrap">
+        <canvas id="ms-canvas" class="chart" width="1200" height="380" aria-label="The mass spectrum"></canvas>
+      </div>
+      <p class="spec-readout" id="ms-readout" role="status">&nbsp;</p>
+      <p class="panel-intro">Click the chromatogram to see the mass spectrum at that moment. Drag across either chart to zoom in (a peak is narrow: zoom in on it to click its top); double-click for all of it.</p>
+    </div>
+
+    <div class="ms-fields">
+      <div class="field">
+        <label class="field-name" for="ms-rt">Your compound comes off the column at</label>
+        <input type="text" id="ms-rt" inputmode="decimal" autocomplete="off"> <span class="unit">min</span>
+        <span class="msg" id="ms-rt-msg" aria-live="polite"></span>
+      </div>
+      <div class="field">
+        <label class="field-name" for="ms-m">The molecular ion, M&#8314;</label>
+        <span class="unit"><i>m/z</i></span> <input type="text" id="ms-m" inputmode="numeric" autocomplete="off">
+        <span class="msg" id="ms-m-msg" aria-live="polite"></span>
+      </div>
+      <div class="field">
+        <label class="field-name" for="ms-base">The base peak</label>
+        <span class="unit"><i>m/z</i></span> <input type="text" id="ms-base" inputmode="numeric" autocomplete="off">
+        <span class="msg" id="ms-base-msg" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="table-block">
+      <table class="data-table readings-table" id="mf-table">
+        <caption>Table 4. Other peaks in the mass spectrum (EI, 70 eV)</caption>
+        <thead>
+          <tr><th scope="col" class="col-shift"><i>m/z</i></th><th scope="col" class="col-lost">Lost from M&#8314;</th><th scope="col">What was lost, or what the ion is <span class="unit">(your assignment)</span></th><th scope="col" class="col-x"><span class="visually-hidden">Remove</span></th></tr>
+        </thead>
+        <tbody id="mf-rows"></tbody>
+      </table>
+      <div class="table-foot">
+        <button type="button" class="quiet-button" id="mf-add">Add a row</button>
+        <p class="msg" id="mf-msg" aria-live="polite"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="part" id="part-structure" aria-labelledby="structure-title">
+    <h2 id="structure-title"><span class="step" aria-hidden="true">7</span>Your structure</h2>
+    <p class="lede">Put it all together: draw the one structure that fits the formula and every spectrum, name it, and say how each kind of spectrum supports it. The page does not check your structure: your instructor marks it.</p>
+
+    <div class="board" id="board">
+      <div class="board-tools" role="toolbar" aria-label="Drawing tools">
+        <span class="tool-set" role="group" aria-label="Bonds and atoms">
+          <button type="button" class="quiet-button tool" data-tool="bond" aria-pressed="true" title="Bonds: click to add one; click a bond to make it double, then triple">Bond</button>
+          <button type="button" class="quiet-button tool atom-tool" data-tool="C" aria-pressed="false">C</button>
+          <button type="button" class="quiet-button tool atom-tool" data-tool="N" aria-pressed="false">N</button>
+          <button type="button" class="quiet-button tool atom-tool" data-tool="O" aria-pressed="false">O</button>
+          <button type="button" class="quiet-button tool atom-tool" data-tool="S" aria-pressed="false">S</button>
+          <button type="button" class="quiet-button tool atom-tool" data-tool="F" aria-pressed="false">F</button>
+          <button type="button" class="quiet-button tool atom-tool" data-tool="Cl" aria-pressed="false">Cl</button>
+          <button type="button" class="quiet-button tool atom-tool" data-tool="Br" aria-pressed="false">Br</button>
+          <button type="button" class="quiet-button tool atom-tool" data-tool="I" aria-pressed="false">I</button>
+        </span>
+        <span class="tool-set" role="group" aria-label="Rings">
+          <button type="button" class="quiet-button tool ring-tool" data-tool="benzene" aria-pressed="false" aria-label="Benzene ring" title="Benzene ring"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,2 20.7,7 20.7,17 12,22 3.3,17 3.3,7"/><line x1="12" y1="5" x2="18.1" y2="8.5"/><line x1="18.1" y1="15.5" x2="12" y2="19"/><line x1="5.9" y1="15.5" x2="5.9" y2="8.5"/></svg></button>
+          <button type="button" class="quiet-button tool ring-tool" data-tool="ring6" aria-pressed="false" aria-label="Six-membered ring" title="Six-membered ring"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,2 20.7,7 20.7,17 12,22 3.3,17 3.3,7"/></svg></button>
+          <button type="button" class="quiet-button tool ring-tool" data-tool="ring5" aria-pressed="false" aria-label="Five-membered ring" title="Five-membered ring"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,2.5 21.5,9.4 17.9,20.6 6.1,20.6 2.5,9.4"/></svg></button>
+          <button type="button" class="quiet-button tool ring-tool" data-tool="ring3" aria-pressed="false" aria-label="Three-membered ring" title="Three-membered ring"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,3.5 21,19 3,19"/></svg></button>
+        </span>
+        <span class="tool-set" role="group" aria-label="Changes">
+          <button type="button" class="quiet-button tool" data-tool="charge" aria-pressed="false" title="Charge: click an atom for +, again for −, again for none">+/−</button>
+          <button type="button" class="quiet-button tool" data-tool="erase" aria-pressed="false" title="Rub out: click an atom or a bond">Rub out</button>
+          <button type="button" class="quiet-button" id="board-undo">Undo</button>
+          <button type="button" class="quiet-button" id="board-clear">Clear</button>
+        </span>
+      </div>
+      <svg class="board-svg" id="board-svg" tabindex="0" role="img" aria-label="Drawing board for your structure"></svg>
+      <p class="board-help">Carbons are the corners and ends of lines, with their hydrogens left out, as in your textbook. <b>Bond</b>: click to add a bond, or drag from an atom to aim one; click a bond to make it double, then triple. <b>C, N, O…</b>: click an atom to change it. A ring button puts a ring where you click, hangs it from an atom, or builds it onto a bond. Ctrl+Z also undoes.</p>
+    </div>
+    <p class="msg board-msg" id="board-msg" aria-live="polite"></p>
+
+    <div class="structure-fields">
+      <label class="field"><span class="field-name">Its name</span><input type="text" id="structure-name" autocomplete="off"></label>
+      <label class="field"><span class="field-name">Or, if you cannot draw it here, its condensed structural formula <span class="soft">(for example (CH₃)₃COH)</span></span><input type="text" id="structure-condensed" autocomplete="off"></label>
+    </div>
+
+    <h3 class="sub-title">How the evidence fits your structure</h3>
+    <div class="why-fields">
+      <label class="field why-field"><span class="field-name">The formula and the degrees of unsaturation</span><textarea id="why-formula" rows="3"></textarea></label>
+      <label class="field why-field"><span class="field-name">The IR spectrum: which bands, which bonds</span><textarea id="why-ir" rows="3"></textarea></label>
+      <label class="field why-field"><span class="field-name">The mass spectrum: the molecular ion and the main fragments</span><textarea id="why-ms" rows="3"></textarea></label>
+      <label class="field why-field"><span class="field-name">The NMR spectra: how the signals, splittings and DEPT fit the pieces of your structure</span><textarea id="why-nmr" rows="4"></textarea></label>
+    </div>
+  </section>
+
+  <section class="part" id="part-turnin" aria-labelledby="turnin-title">
+    <h2 id="turnin-title"><span class="step" aria-hidden="true">8</span><span class="screen-only">Turn in</span><span class="print-only">Your spectra</span></h2>
+    <p class="lede">Your report prints your tables, your structure and every spectrum you recorded, processed as you left it, as below. Print it, or save it as a PDF and upload it as your instructor asks.</p>
+    <div class="report-figures" id="report-figures"></div>
+    <div class="report-row">
+      <label class="field name-field"><span class="field-name">Your name</span><input type="text" id="student-name" autocomplete="name"></label>
+      <button type="button" class="primary-button" id="print-report">Print or save as PDF</button>
+    </div>
+    <p class="report-status" id="report-status" role="status"></p>
+    <p class="fine">
+      Your work is saved in this browser as you go.
+      <button type="button" class="link-button" id="erase-all">Erase everything and start again</button>
+      <span class="confirm" id="erase-confirm" hidden>
+        This erases your spectra, tables and structure. Your unknown stays the same.
+        <button type="button" class="quiet-button danger" id="erase-yes">Erase and start again</button>
+        <button type="button" class="quiet-button" id="erase-no">Keep my work</button>
+      </span>
+    </p>
+  </section>
+
+  <footer class="print-footer" aria-hidden="true"><span id="print-checks"></span></footer>
+
+  <footer class="credits">
+    A simulation. Each unknown's NMR spectra are drawn from published spectra in CDCl&#8323;: the NIST Chemistry WebBook, nmrshiftdb2, the Human Metabolome Database,
+    SDBS (National Institute of Advanced Industrial Science and Technology, Japan) as held by those two databases, and the chemical literature. Its IR and electron-impact
+    mass spectra are drawn from the NIST Chemistry WebBook.
+  </footer>
+</main>
+
+<script src="model.js"></script>
+<script src="draw.js"></script>
+<script src="app.js"></script>
+<script>
+  (function () {
+    var lab = window.NmrLab;
+    if (lab.isMock) return;
+
+    var canvas = document.querySelector("#unity-canvas");
+    var buildUrl = "Build";
+    var loaderUrl = buildUrl + "/NmrLab.loader.js";
+    var config = {
+      arguments: [],
+      dataUrl: buildUrl + "/NmrLab.data.unityweb",
+      frameworkUrl: buildUrl + "/NmrLab.framework.js.unityweb",
+      codeUrl: buildUrl + "/NmrLab.wasm.unityweb",
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "DefaultCompany",
+      productName: "Exam 1 Unknown",
+      productVersion: "0.1.0",
+      showBanner: function (message, type) { lab.unityBanner(message, type); }
+    };
+
+    var script = document.createElement("script");
+    script.src = loaderUrl;
+    script.onload = function () {
+      createUnityInstance(canvas, config, function (progress) { lab.unityProgress(progress); })
+        .then(function (instance) { lab.attachUnity(instance); })
+        .catch(function (error) { lab.unityFailed(error); });
+    };
+    script.onerror = function () { lab.unityFailed("The lab files did not load."); };
+    document.body.appendChild(script);
+  })();
+</script>
+</body>
+</html>
