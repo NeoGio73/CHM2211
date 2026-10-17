@@ -414,6 +414,9 @@ select[data-state] { background-position: right 22px center; }
 .lede { max-width: 86ch; }
 .soft { color: var(--ink-faint); font-weight: 400; }
 .views { flex-wrap: wrap; }
+.stage-controls { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; }
+.sound-button { margin-left: auto; }
+.sound-button[aria-pressed="false"] { color: var(--ink-faint); text-decoration: line-through; }
 
 .formula-tag { margin-left: 1.2em; }
 .formula { font-family: var(--serif); font-size: 1.15em; font-weight: 600; letter-spacing: 0.02em; }
@@ -654,7 +657,7 @@ canvas.chart { display: block; width: 100%; height: auto; cursor: crosshair; tou
   body { font-size: 10pt; }
   .sheet { max-width: none; padding: 0; }
   /* the bench and the instruments' software stay behind: the report has the readings, the structure and the spectra */
-  #part-sample, #part-spectrometer, .instrument, .lede, .credits, .table-foot, .table-status, .col-x,
+  #part-sample, #part-spectrometer, .instrument, .lede, .prelab-note, .credits, .table-foot, .table-status, .col-x,
   .readings-table tr.is-empty, .board, .board-msg, .ms-fields .msg, .structure-fields .soft, .screen-only,
   #part-turnin .report-row, #part-turnin .report-status, #part-turnin .fine { display: none !important; }
   .print-only { display: inline !important; }

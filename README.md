@@ -25,6 +25,8 @@ Each student is given an unknown compound, by a five-character code at the top o
 | 7. Your structure | Draws the structure, names it, and explains how each spectrum supports it |
 | 8. Turn in | Prints the report, or saves it as a PDF, with every spectrum recorded |
 
-The structure itself is not checked by the page: the instructor marks it. A prelab review and a guide to running the NMR are still to come.
+The structure itself is not checked by the page: the instructor marks it.
+
+A [guide to running the NMR](https://neogio73.github.io/CHM2211/exam1-unknown/guide/how-to-run-the-nmr.pdf) (PDF), linked from the lab page, takes students through every step from making up the sample to processing the spectra, with pictures of the lab itself. Its spectra come from a practice sample, not from any of the unknowns. A prelab review is still to come.
 
 The spectra are drawn from published data: the NIST Chemistry WebBook, nmrshiftdb2, the Human Metabolome Database, SDBS (National Institute of Advanced Industrial Science and Technology, Japan) as held by those two databases, and the chemical literature.

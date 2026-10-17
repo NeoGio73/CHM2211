@@ -57,6 +57,7 @@
       dataset: null,
       nextId: 1,
       routine: 'nmr',               // which list of steps is shown beside the room
+      sound: true,                  // the lift air's sound
       ir: null,                     // the last IR spectrum: { from, step, background, sample, t }
       irView: null, irBands: false, irThreshold: 10,
       gc: null,                     // the last GC-MS run: { seed, done } (its chromatogram is asked for again after a reload)
@@ -1681,6 +1682,8 @@
       case 'configured':
       case 'state':
       case 'reset':
+        // the lift air going on or off is heard (not when the room first reports, after a reload)
+        if (msg.type !== 'configured' && state.sample && msg.state && !!state.sample.air !== !!msg.state.air) airSound(!!msg.state.air);
         state.sample = msg.state;
         if (msg.formula) formula = msg.formula;
         solid = !!msg.solid;
@@ -1786,6 +1789,89 @@
     }
   }
 
+  // ---- The lift air's sound -------------------------------------------------------------------------
+  // When the lift air goes on, a rush of air rises in pitch and settles to a soft, steady hiss while
+  // the sample floats; when it goes off, the hiss falls in pitch and dies away. It is made in the
+  // browser from noise (Web Audio), so there are no sound files. The Sound button turns it off.
+
+  var air = { ctx: null, src: null, filter: null, gain: null };
+
+  function audioContext() {
+    if (air.ctx) return air.ctx;
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    try { air.ctx = new AC(); } catch (e) { return null; }
+    return air.ctx;
+  }
+
+  /** Browsers start sound only after the visitor has clicked or typed on the page: get it ready then. */
+  function readyAudio() {
+    if (!state.sound) return;
+    var c = audioContext();
+    if (c && c.state === 'suspended') c.resume();
+  }
+
+  function airSound(on) {
+    if (!state.sound) return;
+    var c = audioContext();
+    if (!c) return;
+    if (c.state === 'suspended') c.resume();
+    var t = c.currentTime;
+    if (on) {
+      stopAirSound(t, 0.05);
+      var len = 2 * c.sampleRate, buf = c.createBuffer(1, len, c.sampleRate), data = buf.getChannelData(0);
+      for (var i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+      var src = c.createBufferSource(), filter = c.createBiquadFilter(), gain = c.createGain();
+      src.buffer = buf; src.loop = true;
+      filter.type = 'bandpass'; filter.Q.value = 2.5;
+      src.connect(filter); filter.connect(gain); gain.connect(c.destination);
+      // the rush rises in pitch as the air comes up to pressure, then settles
+      filter.frequency.setValueAtTime(260, t);
+      filter.frequency.exponentialRampToValueAtTime(2600, t + 1.4);
+      filter.frequency.exponentialRampToValueAtTime(2100, t + 2.2);
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(0.32, t + 0.35);
+      gain.gain.exponentialRampToValueAtTime(0.09, t + 2.2);
+      src.start(t);
+      air.src = src; air.filter = filter; air.gain = gain;
+    } else if (air.src) {
+      // the opposite: the pitch falls and the hiss dies away
+      var f = air.filter, g = air.gain;
+      f.frequency.cancelScheduledValues(t);
+      f.frequency.setValueAtTime(Math.max(f.frequency.value, 300), t);
+      f.frequency.exponentialRampToValueAtTime(180, t + 1.4);
+      g.gain.cancelScheduledValues(t);
+      g.gain.setValueAtTime(Math.max(g.gain.value, 0.0001), t);
+      g.gain.exponentialRampToValueAtTime(0.22, t + 0.15);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 1.5);
+      air.src.stop(t + 1.6);
+      air.src = null;
+    }
+  }
+
+  function stopAirSound(t, fade) {
+    if (!air.src) return;
+    air.gain.gain.cancelScheduledValues(t);
+    air.gain.gain.setValueAtTime(Math.max(air.gain.gain.value, 0.0001), t);
+    air.gain.gain.exponentialRampToValueAtTime(0.0001, t + fade);
+    air.src.stop(t + fade + 0.02);
+    air.src = null;
+  }
+
+  function bindSound() {
+    var b = $('sound-toggle');
+    b.setAttribute('aria-pressed', state.sound ? 'true' : 'false');
+    b.addEventListener('click', function () {
+      state.sound = !state.sound;
+      b.setAttribute('aria-pressed', state.sound ? 'true' : 'false');
+      if (!state.sound && air.ctx) stopAirSound(air.ctx.currentTime, 0.3);
+      readyAudio();
+      saveState();
+    });
+    document.addEventListener('pointerdown', readyAudio, { passive: true });
+    document.addEventListener('keydown', readyAudio);
+  }
+
   // ---- Wiring for the Unity loader in index.html ---------------------------------------------------
 
   var lab = window.NmrLab = {
@@ -1829,6 +1915,7 @@
   bindGc();
   bindStructure();
   bindReport();
+  bindSound();
   buildReadings();
   showFormula();
   showRoutine();
