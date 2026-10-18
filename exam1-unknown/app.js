@@ -229,12 +229,56 @@
     }[s.held || ''];
     $('held-note').textContent = held || '';
     $('put-down').disabled = !s.held;
+    showLights(s);
+  }
+
+  /**
+   * The lights beside the steps: a green tick on each step done (set above), a blue ring with
+   * "Next" and the hint on the one step to do now, and a red "!" with the room's reason on a step
+   * the room has just refused. The red clears as soon as anything in the room changes.
+   */
+  var attention = null;            // { key, text, snap }
+  var lastPress = null;            // { key, t }: the step whose button was pressed last
+  function lightInfo() { return { solid: solid, recorded: irRecorded(), gc: !!state.gc, running: gcRunning }; }
+
+  function stepLine(li, cls, text) {
+    var node = li.querySelector('.' + cls);
+    if (!node) { node = el('span', { 'class': cls }); li.appendChild(node); }
+    node.textContent = text || '';
+  }
+
+  function showLights(s) {
+    var info = lightInfo();
+    if (attention && attention.snap !== JSON.stringify(s)) attention = null;
+    Object.keys(ROUTINE_LIST).forEach(function (focus) {
+      var key = M.nextStepKey(s, focus, info);
+      Array.prototype.forEach.call(document.querySelectorAll('#' + ROUTINE_LIST[focus] + ' .routine-step'), function (li) {
+        var name = li.getAttribute('data-done');
+        var done = li.getAttribute('data-state') === 'done';
+        var flagged = attention && attention.key === name;
+        var next = !done && !flagged && name === key;
+        if (flagged) li.setAttribute('data-state', 'attention');
+        else if (next) li.setAttribute('data-state', 'next');
+        else if (!done) li.setAttribute('data-state', '');
+        stepLine(li, 'routine-hint', next ? M.nextStep(s, focus, info) : '');
+        stepLine(li, 'routine-alert', flagged ? attention.text : '');
+      });
+    });
+  }
+
+  function flagStep(reason) {
+    var key = lastPress && Date.now() - lastPress.t < 4000 ? lastPress.key : M.nextStepKey(state.sample, state.routine, lightInfo());
+    if (!key) return;
+    attention = { key: key, text: M.reasonText(reason), snap: JSON.stringify(state.sample || {}) };
+    showLights(state.sample || {});
   }
 
   function bindRoutine() {
     Array.prototype.forEach.call(document.querySelectorAll('[data-steps]'), function (b) {
       b.addEventListener('click', function () {
         var s = state.sample || {};
+        var row = b.closest('.routine-step');
+        if (row) lastPress = { key: row.getAttribute('data-done'), t: Date.now() };
         var list = b.getAttribute('data-steps').split('|').filter(function (step) {
           // already in the hand: picking it up again would put it down
           if (step === 'take syringe') return s.held !== 'syringe' && s.held !== 'syringefull';
@@ -806,10 +850,14 @@
         var a2 = Math.round(Math.min(idx(r[0]), idx(r[1]))), b2 = Math.round(Math.max(idx(r[0]), idx(r[1])));
         var hgt = (y1 - y0) * 0.45 * areas[n2] / biggest, run = 0, base = zeroY - 26 * dpr;
         g.strokeStyle = '#1b7a40'; g.lineWidth = Math.max(1, dpr * 1.2); g.beginPath();
-        for (var j = a2; j <= b2; j++) {
+        // as on a printed spectrum, the running total starts at the region's downfield (left) end
+        // and climbs in a step at each signal going upfield, whichever way the points are stored
+        var leftFirst = ppm2px(M.ppmAt(spec, a2) + ref) <= ppm2px(M.ppmAt(spec, b2) + ref);
+        for (var c = 0; c <= b2 - a2; c++) {
+          var j = leftFirst ? a2 + c : b2 - c;
           run += y[j];
           var xx = ppm2px(M.ppmAt(spec, j) + ref), yy = base - run / (areas[n2] || 1) * hgt;
-          if (j === a2) g.moveTo(xx, yy); else g.lineTo(xx, yy);
+          if (c === 0) g.moveTo(xx, yy); else g.lineTo(xx, yy);
         }
         g.stroke();
         var label = (areas[n2] * factor).toFixed(2);
@@ -1753,7 +1801,7 @@
         if (msg.what === 'lock' || msg.what === 'gain' || msg.what === 'acquire') {
           var where = msg.what === 'lock' ? 'lock-msg' : 'acquire-msg';
           $(where).textContent = M.reasonText(msg.reason);
-        }
+        } else flagStep(msg.reason);
         break;
       case 'hover':
         hoverNote(msg.item ? (M.HOVER[msg.item] || null) : null);

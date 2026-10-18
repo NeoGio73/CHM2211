@@ -427,24 +427,61 @@ select[data-state] { background-position: right 22px center; }
 .routine-column { min-width: 0; }
 .routine { list-style: none; margin: 0; padding: 0; counter-reset: step; }
 .routine-step {
+  position: relative;
   display: grid;
   grid-template-columns: 1.6rem minmax(0, 1fr);
   grid-template-areas: "num name" "num buttons" "num state";
   gap: 2px 8px;
-  padding: 7px 0;
-  border-bottom: 1px solid var(--rule);
+  padding: 8px 0 10px;
   counter-increment: step;
 }
+/* the step's light: a hollow numbered circle until it is the next one, done, or needs attention */
 .routine-step::before {
   content: counter(step);
   grid-area: num;
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
   width: 1.45rem; height: 1.45rem;
   border-radius: 50%;
   display: grid; place-items: center;
-  background: var(--wash); color: var(--ink-soft);
-  font-size: 0.8rem; font-weight: 700;
+  border: 1.5px solid var(--rule-strong);
+  background: var(--paper); color: var(--ink-soft);
+  font-size: 0.78rem; font-weight: 700;
 }
-.routine-step[data-state="done"]::before { content: "\2713"; background: var(--good-wash); color: var(--good); }
+/* the line joining one light to the next, green once the step is done */
+.routine-step::after {
+  content: "";
+  position: absolute;
+  left: calc(0.725rem - 1px);
+  top: calc(8px + 1.45rem + 2px);
+  bottom: -8px;
+  width: 2px;
+  background: var(--rule);
+}
+.routine-step:last-child::after { display: none; }
+.routine-step[data-state="done"]::before { content: "\2713"; background: var(--good); border-color: var(--good); color: #fff; }
+.routine-step[data-state="done"]::after { background: var(--good); }
+.routine-step[data-state="next"]::before {
+  border: 2px solid var(--enamel); color: var(--enamel-deep);
+  box-shadow: 0 0 0 4px var(--enamel-wash);
+  animation: step-next 2.2s ease-in-out infinite;
+}
+@keyframes step-next { 0%, 100% { box-shadow: 0 0 0 3px var(--enamel-wash); } 50% { box-shadow: 0 0 0 7px var(--enamel-wash); } }
+@media (prefers-reduced-motion: reduce) { .routine-step[data-state="next"]::before { animation: none; } }
+.routine-step[data-state="attention"]::before { content: "!"; background: var(--flag); border-color: var(--flag); color: #fff; font-size: 0.9rem; }
+/* the words beside the light: a tag on the name, the hint for the next step, the room's reason for a refusal */
+.routine-step[data-state="next"] .routine-name::after,
+.routine-step[data-state="attention"] .routine-name::after {
+  display: inline-block; margin-left: 7px; padding: 0 7px; border-radius: 999px;
+  font-size: 0.72rem; font-weight: 700; line-height: 1.5; vertical-align: 1px;
+}
+.routine-step[data-state="next"] .routine-name::after { content: "Next"; background: var(--enamel-wash); color: var(--enamel-deep); }
+.routine-step[data-state="attention"] .routine-name::after { content: "Needs attention"; background: var(--flag-wash); color: var(--flag); }
+.routine-hint, .routine-alert { grid-column: 2; font-size: 0.82rem; line-height: 1.35; }
+.routine-hint { color: var(--ink-soft); }
+.routine-alert { color: var(--flag); font-weight: 600; }
+.routine-hint:empty, .routine-alert:empty { display: none; }
 .routine-name { grid-area: name; font-weight: 600; font-size: 0.95rem; }
 .routine-buttons { grid-area: buttons; display: flex; flex-wrap: wrap; gap: 6px; }
 .routine-buttons .quiet-button { font-size: 0.86rem; padding: 4px 9px; }

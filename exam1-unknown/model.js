@@ -279,6 +279,46 @@
     return '';
   }
 
+  /**
+   * Which step of a list (focus "nmr", "ir" or "ms") is the one to do now, by the same reasoning as
+   * nextStep: the data-done name of its row in the list beside the room, or null when none is
+   * (the sample is in the magnet, the IR spectrum is recorded, the GC run is under way or done).
+   */
+  function nextStepKey(s, focus, info) {
+    if (!s) return null;
+    info = info || {};
+    if (focus === 'ir') {
+      if (s.held === 'irdrop') return 'ir-sample';
+      if (!s.background) return s.crystal === 'clean' ? 'ir-background' : 'ir-clean';
+      if (s.crystal === 'clean') return info.recorded ? null : 'ir-sample';
+      if (info.solid && !s.clamp) return 'ir-clamp';
+      return info.recorded ? null : 'ir-record';
+    }
+    if (focus === 'ms') {
+      if (s.held === 'syringe') return 'gc-fill';
+      if (s.held === 'syringefull') return 'gc-inject';
+      return info.running || info.gc ? null : 'gc-fill';
+    }
+    switch (s.held) {
+      case 'solvent': return 'solvent';
+      case 'd2o': return 'd2o';
+      case 'pipet': case 'solution': return 'tube';
+      case 'cap': return s.d2o ? 'd2o' : 'capped';
+      case 'tube': return 'spinner';
+      case 'spinner': return s.air ? 'magnet' : 'air';
+    }
+    if (s.addedMl < 0.55 && s.tubeMl <= 0) return 'solvent';
+    if (!s.dissolved && s.tubeMl <= 0) return 'dissolved';
+    if (s.tubeMl <= 0) return 'tube';
+    if (s.d2o && s.place === 'rack' && (!s.capped || !s.shaken)) return 'd2o';
+    if (!s.capped) return 'capped';
+    if (!s.inSpinner) return 'spinner';
+    if (s.place === 'gauge' || (s.place === 'holder' && !s.gauged)) return 'depth';
+    if (s.place === 'holder') return !s.air ? 'air' : (s.standard !== 'holder' ? 'standard' : 'magnet');
+    if (s.place === 'top') return s.standard === 'top' ? 'standard' : 'air';
+    return null;
+  }
+
   function irStep(s, info) {
     if (!s.background) return s.crystal === 'clean'
       ? 'First record a background, with nothing on the crystal: Record the background.'
@@ -636,7 +676,7 @@
   var api = {
     ALPHABET: ALPHABET, codeFromNumber: codeFromNumber, numberFromCode: numberFromCode, normalizeCode: normalizeCode, isCode: isCode, randomCode: randomCode,
     parseFormula: parseFormula, unsaturation: unsaturation, formulaParts: formulaParts, readNumber: readNumber, checkUnsaturation: checkUnsaturation,
-    reasonText: reasonText, HOVER: HOVER, nextStep: nextStep,
+    reasonText: reasonText, HOVER: HOVER, nextStep: nextStep, nextStepKey: nextStepKey,
     fft: fft, readFid: readFid, transform: transform, ppmAt: ppmAt, indexAt: indexAt, phased: phased, noiseLevel: noiseLevel,
     autophase: autophase, baseline: baseline, pickPeaks: pickPeaks, integrate: integrate, nearestPeak: nearestPeak,
     SOLVENTS: SOLVENTS, EXPERIMENTS: EXPERIMENTS, SCAN_CHOICES: SCAN_CHOICES, REFERENCES: REFERENCES,
