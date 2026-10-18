@@ -118,6 +118,26 @@
     .reveal[hidden] { display: none; }
     .reveal { margin-top: 14px; padding: 12px 16px; border-radius: 8px; border: 1.5px solid var(--good); background: var(--good-wash); max-width: 780px; }
 
+    .iso-grid { display: grid; grid-template-columns: minmax(0, 20rem) minmax(0, 1fr); gap: 18px 24px; align-items: start; }
+    .iso-elements { display: grid; gap: 6px; }
+    .iso-row { display: grid; grid-template-columns: 2.4rem minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 5px 8px; border: 1px solid var(--rule); border-radius: 8px; background: #fff; }
+    .iso-sym { font-family: var(--serif); font-size: 1.25rem; font-weight: 600; text-align: center; }
+    .iso-info { font-size: 0.78rem; line-height: 1.3; color: var(--ink-soft); }
+    .iso-info b { color: var(--ink); font-weight: 650; }
+    .iso-tag { display: inline-block; margin-left: 4px; padding: 0 6px; border-radius: 999px; font-size: 0.7rem; font-weight: 700; }
+    .iso-tag.one { background: var(--enamel-wash); color: var(--enamel-deep); }
+    .iso-tag.two { background: var(--flag-wash); color: var(--flag); }
+    .iso-step { display: flex; align-items: center; gap: 4px; }
+    .iso-step button { width: 1.9rem; height: 1.9rem; border: 1.5px solid var(--rule-strong); border-radius: 6px; background: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+    .iso-step button:hover { border-color: var(--enamel); background: var(--enamel-wash); }
+    .iso-step output { min-width: 2rem; text-align: center; font-variant-numeric: tabular-nums; font-weight: 700; }
+    .iso-formula { margin: 0 0 6px; font-size: 1.05rem; }
+    .iso-formula b { font-family: var(--serif); font-size: 1.35rem; }
+    .iso-why { margin: 6px 0 0; font-size: 0.9rem; }
+    .iso-why li { margin-bottom: 4px; }
+    table.iso-table td.num, table.iso-table th.num { text-align: right; }
+    table.iso-table tr.main td { font-weight: 650; }
+    @media (max-width: 820px) { .iso-grid { grid-template-columns: minmax(0, 1fr); } }
     .next { margin-top: 40px; padding: 18px 20px; border-radius: 10px; background: var(--wash); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; }
     .next p { margin: 0; max-width: 60ch; }
     .sources { margin-top: 40px; padding-top: 14px; border-top: 1px solid var(--rule); font-size: 0.86rem; color: var(--ink-soft); }
@@ -378,19 +398,24 @@
           <li><b>M⁺</b>, the molecular ion, is usually the highest m/z of any size: the molar mass, counted with the most common isotopes. Check it against your formula. It can be small, or even missing when the ion breaks up completely.</li>
           <li>The <b>base peak</b> is the tallest; it is often a fragment, not M⁺.</li>
           <li><b>Odd M⁺, odd number of N</b> (the nitrogen rule): a compound of C, H, O and halogens has an even molar mass.</li>
-          <li><b>M+1</b>: ¹³C makes a small peak one mass up, about 1.1% of M⁺ for every carbon.</li>
-          <li><b>M+2</b>: chlorine and bromine have two common isotopes, two mass units apart. One Cl gives an M+2 about a third as tall as M⁺; one Br gives an M+2 about as tall as M⁺.</li>
+          <li><b>M+1</b>: ¹³C makes a small peak one mass up, about 1.1% of M⁺ for every carbon. C, H and N are <b>"+1" elements</b>: their heavier isotope is one mass up.</li>
+          <li><b>M+2</b>: chlorine and bromine have two common isotopes, two mass units apart. One Cl gives an M+2 about a third as tall as M⁺; one Br gives an M+2 about as tall as M⁺. Cl, Br, S and O are <b>"+2" elements</b> (in O and S the heavier isotope is rare, so their M+2 is small).</li>
           <li><b>Fragments</b> are read as losses from M⁺: the difference in mass says what fell off.</li>
         </ul>
       </div>
       <div class="tool" id="iso-tool">
-        <h3>What halogen does to M⁺</h3>
-        <div class="chips" role="group" aria-label="Halogen" id="iso-chips">
-          <button type="button" class="chip" data-x="none" aria-pressed="true">No Cl or Br</button>
-          <button type="button" class="chip" data-x="cl" aria-pressed="false">One Cl</button>
-          <button type="button" class="chip" data-x="br" aria-pressed="false">One Br</button>
+        <h3>Isotope patterns: build a formula and see its molecular ion</h3>
+        <p class="small soft">Every element's isotopes, in the proportions found in nature (NIST). Change how many atoms of each element the molecule has, or pick a formula, and the page works out how tall M, M+1, M+2 and the rest would be.</p>
+        <div class="chips" role="group" aria-label="Formulas to try" id="iso-presets"></div>
+        <div class="iso-grid">
+          <div class="iso-elements" id="iso-elements"></div>
+          <div>
+            <p class="iso-formula" id="iso-formula" aria-live="polite"></p>
+            <figure class="chart"><svg id="iso-svg" viewBox="0 0 640 210" role="img" aria-label="The molecular ion and its isotope peaks"></svg></figure>
+            <div class="table-scroll"><table class="ref iso-table" id="iso-table"><thead><tr><th>Peak</th><th class="num">m/z</th><th class="num">Height (% of the tallest)</th><th class="num">% of M</th></tr></thead><tbody></tbody></table></div>
+            <ul class="iso-why" id="iso-why"></ul>
+          </div>
         </div>
-        <figure class="chart"><svg id="iso-svg" viewBox="0 0 640 170" role="img" aria-label="The molecular ion region"></svg><figcaption id="iso-cap"></figcaption></figure>
       </div>
       <div class="two">
         <div>
@@ -579,24 +604,160 @@
   }
   showSplit(3);
 
-  // ---- isotope pattern ----
-  function showIso(kind) {
-    var svg = $('iso-svg'); clear(svg);
-    var bars = kind === 'cl' ? [[0, 100], [1, 4.5], [2, 32], [3, 1.4]] : kind === 'br' ? [[0, 100], [1, 4.5], [2, 97], [3, 4.4]] : [[0, 100], [1, 4.5], [2, 0.3]];
-    var base = 135, x0 = 200, step = 80;
-    svg.appendChild(svgEl('line', { x1: 140, y1: base, x2: 520, y2: base, stroke: RULE, 'stroke-width': 1.5 }));
-    bars.forEach(function (b) {
-      var x = x0 + b[0] * step, top = base - 105 * b[1] / 100;
-      svg.appendChild(svgEl('rect', { x: x - 9, y: top, width: 18, height: Math.max(1, base - top), fill: b[0] === 0 ? BLUE : b[0] === 2 && kind !== 'none' ? RED : SOFT }));
-      svg.appendChild(svgEl('text', { x: x, y: base + 18, 'text-anchor': 'middle', 'font-size': 13, fill: INK, 'font-family': 'system-ui, sans-serif' }, b[0] === 0 ? 'M' : 'M+' + b[0]));
-    });
-    $('iso-cap').textContent = kind === 'cl' ? 'One chlorine: ³⁵Cl and ³⁷Cl are about 3 : 1, so M+2 is about a third of M⁺.'
-      : kind === 'br' ? 'One bromine: ⁷⁹Br and ⁸¹Br are almost 1 : 1, so M⁺ and M+2 are about equally tall.'
-      : 'No Cl or Br: only a small M+1 (here about 4.5%, as for four carbons) and almost no M+2.';
-    Array.prototype.forEach.call($('iso-chips').children, function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-x') === kind ? 'true' : 'false'); });
+  // ---- isotope patterns: the molecular ion of any formula ----
+  // Isotopes as [extra mass over the lightest, abundance], from NIST's Atomic Weights and Isotopic
+  // Compositions (the IUPAC values); masses are nominal, as in a low-resolution spectrum.
+  var ISO = [
+    { el: 'C', mass: 12, max: 60, iso: [[0, 0.9893], [1, 0.0107]], names: ['¹²C', '¹³C'], kind: 'one' },
+    { el: 'H', mass: 1, max: 122, iso: [[0, 0.999885], [1, 0.000115]], names: ['¹H', '²H'], kind: 'one' },
+    { el: 'N', mass: 14, max: 6, iso: [[0, 0.99636], [1, 0.00364]], names: ['¹⁴N', '¹⁵N'], kind: 'one' },
+    { el: 'O', mass: 16, max: 8, iso: [[0, 0.99757], [1, 0.00038], [2, 0.00205]], names: ['¹⁶O', '¹⁷O', '¹⁸O'], kind: 'two' },
+    { el: 'S', mass: 32, max: 4, iso: [[0, 0.9499], [1, 0.0075], [2, 0.0425], [4, 0.0001]], names: ['³²S', '³³S', '³⁴S', '³⁶S'], kind: 'two' },
+    { el: 'Cl', mass: 35, max: 6, iso: [[0, 0.7576], [2, 0.2424]], names: ['³⁵Cl', '³⁷Cl'], kind: 'two' },
+    { el: 'Br', mass: 79, max: 4, iso: [[0, 0.5069], [2, 0.4931]], names: ['⁷⁹Br', '⁸¹Br'], kind: 'two' }
+  ];
+  // formulas to try: none is the formula of an unknown in the lab
+  var ISO_PRESETS = [
+    ['C₁₀H₂₂', { C: 10, H: 22 }], ['C₂₀H₄₂', { C: 20, H: 42 }], ['C₄H₁₀O', { C: 4, H: 10, O: 1 }], ['C₅H₁₁N', { C: 5, H: 11, N: 1 }],
+    ['C₄H₄S', { C: 4, H: 4, S: 1 }], ['C₆H₅Cl', { C: 6, H: 5, Cl: 1 }], ['CH₂Cl₂', { C: 1, H: 2, Cl: 2 }], ['CHCl₃', { C: 1, H: 1, Cl: 3 }],
+    ['C₄H₉Br', { C: 4, H: 9, Br: 1 }], ['C₂H₄Br₂', { C: 2, H: 4, Br: 2 }], ['CH₂BrCl', { C: 1, H: 2, Br: 1, Cl: 1 }]
+  ];
+  var isoCount = { C: 4, H: 9, N: 0, O: 0, S: 0, Cl: 0, Br: 1 };
+
+  function convolve(a, b, upTo) {
+    var out = [];
+    for (var k = 0; k <= upTo; k++) out.push(0);
+    for (var i = 0; i < a.length; i++) for (var j = 0; j < b.length; j++) if (i + j <= upTo) out[i + j] += a[i] * b[j];
+    return out;
   }
-  Array.prototype.forEach.call($('iso-chips').children, function (b) { b.addEventListener('click', function () { showIso(b.getAttribute('data-x')); }); });
-  showIso('none');
+  /** The relative sizes of M, M+1, M+2 … for the counts given (up to M+upTo). */
+  function isotopePattern(count, upTo) {
+    var total = [1];
+    ISO.forEach(function (e) {
+      var one = [];
+      for (var k = 0; k <= upTo; k++) one.push(0);
+      e.iso.forEach(function (p) { if (p[0] <= upTo) one[p[0]] += p[1]; });
+      for (var n = 0; n < (count[e.el] || 0); n++) total = convolve(total, one, upTo);
+    });
+    while (total.length <= upTo) total.push(0);
+    return total;
+  }
+
+  function isoFormulaText() {
+    // in the usual (Hill) order: C, then H, then the rest alphabetically
+    var order = ['C', 'H'].concat(ISO.map(function (e) { return e.el; }).filter(function (x) { return x !== 'C' && x !== 'H'; }).sort());
+    var text = '';
+    order.forEach(function (x) { var n = isoCount[x]; if (n) text += x + (n > 1 ? subs(String(n)) : ''); });
+    return text || '—';
+  }
+
+  function buildIsoTool() {
+    var host = $('iso-elements');
+    ISO.forEach(function (e) {
+      var row = el('div', 'iso-row');
+      row.appendChild(el('span', 'iso-sym', e.el));
+      var info = el('span', 'iso-info');
+      var shares = e.iso.map(function (p, k) { return e.names[k] + ' ' + (p[1] * 100 < 0.1 ? (p[1] * 100).toFixed(3) : (p[1] * 100).toFixed(2)) + '%'; });
+      info.appendChild(el('b', null, shares.join(', ')));
+      var tag = el('span', 'iso-tag ' + e.kind, e.kind === 'one' ? '+1 element' : '+2 element');
+      info.appendChild(tag);
+      row.appendChild(info);
+      var stepper = el('span', 'iso-step');
+      var minus = el('button', null, '−'), out = el('output'), plus = el('button', null, '+');
+      minus.type = plus.type = 'button';
+      minus.setAttribute('aria-label', 'One ' + e.el + ' fewer');
+      plus.setAttribute('aria-label', 'One ' + e.el + ' more');
+      out.id = 'iso-n-' + e.el;
+      minus.addEventListener('click', function () { isoCount[e.el] = Math.max(0, isoCount[e.el] - 1); showIsoPattern(); });
+      plus.addEventListener('click', function () { isoCount[e.el] = Math.min(e.max, isoCount[e.el] + 1); showIsoPattern(); });
+      stepper.appendChild(minus); stepper.appendChild(out); stepper.appendChild(plus);
+      row.appendChild(stepper);
+      host.appendChild(row);
+    });
+    ISO_PRESETS.forEach(function (pr) {
+      var b = el('button', 'chip', pr[0]);
+      b.type = 'button';
+      b.addEventListener('click', function () {
+        ISO.forEach(function (e) { isoCount[e.el] = pr[1][e.el] || 0; });
+        showIsoPattern();
+      });
+      $('iso-presets').appendChild(b);
+    });
+    showIsoPattern();
+  }
+
+  function pct(v) { return v >= 10 ? v.toFixed(1) : (v >= 1 ? v.toFixed(2) : (v >= 0.01 ? v.toFixed(2) : '<0.01')); }
+
+  function showIsoPattern() {
+    ISO.forEach(function (e) { $('iso-n-' + e.el).textContent = isoCount[e.el]; });
+    var form = isoFormulaText(), anything = form !== '—';
+    var M = 0;
+    ISO.forEach(function (e) { M += e.mass * isoCount[e.el]; });
+    var f = $('iso-formula');
+    f.textContent = '';
+    f.appendChild(el('b', null, form));
+    if (anything) f.appendChild(document.createTextNode('   M⁺ at m/z ' + M + (isoCount.N % 2 ? ' (odd: an odd number of N)' : '')));
+    Array.prototype.forEach.call($('iso-presets').children, function (b, k) {
+      var pr = ISO_PRESETS[k][1], same = ISO.every(function (e) { return (pr[e.el] || 0) === isoCount[e.el]; });
+      b.setAttribute('aria-pressed', same ? 'true' : 'false');
+    });
+    var svg = $('iso-svg'); clear(svg);
+    var body = $('iso-table').tBodies[0]; body.textContent = '';
+    var why = $('iso-why'); why.textContent = '';
+    if (!anything) return;
+    var UP = 8, pat = isotopePattern(isoCount, UP);
+    var top = Math.max.apply(null, pat);
+    var last = 0;
+    for (var k = 0; k <= UP; k++) if (pat[k] / top * 100 >= 0.05) last = k;
+    last = Math.max(last, 2);
+    // the bars; on a narrow screen the chart is drawn narrower rather than shrunk, so its numbers stay readable
+    var W = svg.parentNode.clientWidth && svg.parentNode.clientWidth < 520 ? 380 : 640;
+    svg.setAttribute('viewBox', '0 0 ' + W + ' 210');
+    var base = 168, x0 = W < 640 ? 34 : 60, x1 = W - (W < 640 ? 24 : 30), step = Math.min(80, (x1 - x0) / (last + 1)), left = (x0 + x1) / 2 - step * last / 2;
+    var barW = Math.min(22, step * 0.55);
+    svg.appendChild(svgEl('line', { x1: x0 - 20, y1: base, x2: x1 + 10, y2: base, stroke: RULE, 'stroke-width': 1.5 }));
+    for (var j = 0; j <= last; j++) {
+      var h = pat[j] / top * 100, x = left + j * step, y = base - 130 * h / 100;
+      var colour = j === 0 ? BLUE : (j % 2 === 0 && (isoCount.Cl || isoCount.Br || isoCount.S) ? RED : SOFT);
+      svg.appendChild(svgEl('rect', { x: x - barW / 2, y: y, width: barW, height: Math.max(1, base - y), fill: colour }));
+      svg.appendChild(svgEl('text', { x: x, y: y - 6, 'text-anchor': 'middle', 'font-size': 12, fill: INK, 'font-family': 'system-ui, sans-serif' }, pct(h)));
+      svg.appendChild(svgEl('text', { x: x, y: base + 17, 'text-anchor': 'middle', 'font-size': 12.5, 'font-weight': 600, fill: INK, 'font-family': 'system-ui, sans-serif' }, j === 0 ? 'M' : 'M+' + j));
+      svg.appendChild(svgEl('text', { x: x, y: base + 33, 'text-anchor': 'middle', 'font-size': 11.5, fill: SOFT, 'font-family': 'system-ui, sans-serif' }, String(M + j)));
+      var tr = document.createElement('tr');
+      if (j === 0) tr.className = 'main';
+      [j === 0 ? 'M' : 'M+' + j, String(M + j), pct(h), pct(pat[j] / pat[0] * 100)].forEach(function (v, c) {
+        var td = el('td', c ? 'num' : null, v); tr.appendChild(td);
+      });
+      body.appendChild(tr);
+    }
+    // where M+1 and M+2 come from, element by element (to first order)
+    var r1 = [], r2 = [], sum1 = 0, sum2 = 0;
+    ISO.forEach(function (e) {
+      var n = isoCount[e.el]; if (!n) return;
+      var a0 = e.iso[0][1], one = 0, two = 0;
+      e.iso.forEach(function (p) { if (p[0] === 1) one = p[1] / a0; if (p[0] === 2) two = p[1] / a0; });
+      if (one * n * 100 >= 0.05) { r1.push(n + ' ' + e.el + ' × ' + (one * 100).toFixed(e.el === 'H' ? 3 : 2) + '% = ' + (n * one * 100).toFixed(2) + '%'); sum1 += n * one; }
+      if (two * n * 100 >= 0.05) { r2.push(n + ' ' + e.el + ' × ' + (two * 100).toFixed(1) + '% = ' + (n * two * 100).toFixed(1) + '%'); sum2 += n * two; }
+    });
+    var li1 = el('li');
+    li1.appendChild(el('b', null, 'M+1 ≈ ' + (sum1 * 100).toFixed(1) + '% of M: '));
+    li1.appendChild(document.createTextNode(r1.join(' + ') || 'none'));
+    why.appendChild(li1);
+    if (r2.length) {
+      var li2 = el('li');
+      li2.appendChild(el('b', null, 'M+2 ≈ ' + (sum2 * 100).toFixed(1) + '% of M from the +2 elements: '));
+      li2.appendChild(document.createTextNode(r2.join(' + ') + ' (plus a little from two ¹³C together).'));
+      why.appendChild(li2);
+    }
+    var nX = isoCount.Cl + isoCount.Br;
+    if (nX >= 2) why.appendChild(el('li', null, 'With ' + nX + ' halogen atoms the pattern spreads to M+' + 2 * nX + ': each Cl or Br can be light or heavy, and the peaks two mass units apart count the ways.'));
+  }
+  buildIsoTool();
+  var isoWide = null;
+  window.addEventListener('resize', function () {
+    var wide = $('iso-svg').parentNode.clientWidth >= 520;
+    if (wide !== isoWide) { isoWide = wide; showIsoPattern(); }
+  });
 
   // ---- spectra drawn from line lists ----
   function axis(svg, x0, x1, y, from, to, ticks, label) {
