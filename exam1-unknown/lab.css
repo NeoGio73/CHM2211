@@ -691,12 +691,18 @@ canvas.chart { display: block; width: 100%; height: auto; cursor: crosshair; tou
   .progress-fill, .acq-fill { transition: none; }
 }
 
+/* ---- Part 7: the name of the structure drawn, looked up in PubChem ---- */
+.name-lookup { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 8px 0 2px; }
+.name-result { font-size: 0.95rem; }
+.name-result b { color: var(--enamel-deep); }
+.name-note { max-width: 78ch; margin: 2px 0 12px; font-size: 0.82rem; color: var(--ink-soft); }
+
 @media print {
   @page { margin: 12mm 13mm; }
   body { font-size: 10pt; }
   .sheet { max-width: none; padding: 0; }
   /* the bench and the instruments' software stay behind: the report has the readings, the structure and the spectra */
-  #part-sample, #part-spectrometer, .instrument, .lede, .prelab-note, .credits, .table-foot, .table-status, .col-x,
+  #part-sample, #part-spectrometer, .instrument, .lede, .prelab-note, .name-lookup, .name-note, .credits, .table-foot, .table-status, .col-x,
   .readings-table tr.is-empty, .board, .board-msg, .ms-fields .msg, .structure-fields .soft, .screen-only,
   #part-turnin .report-row, #part-turnin .report-status, #part-turnin .fine { display: none !important; }
   .print-only { display: inline !important; }

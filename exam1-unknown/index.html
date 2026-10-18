@@ -455,6 +455,12 @@
       <p class="board-help">Carbons are the corners and ends of lines, with their hydrogens left out, as in your textbook. <b>Bond</b>: click to add a bond, or drag from an atom to aim one; click a bond to make it double, then triple. <b>C, N, O…</b>: click an atom to change it. A ring button puts a ring where you click, hangs it from an atom, or builds it onto a bond. Ctrl+Z also undoes.</p>
     </div>
     <p class="msg board-msg" id="board-msg" aria-live="polite"></p>
+    <div class="name-lookup">
+      <button type="button" class="quiet-button" id="name-button">Name my structure</button>
+      <span class="name-result" id="name-result" aria-live="polite"></span>
+      <button type="button" class="quiet-button" id="name-use" hidden>Use this name</button>
+    </div>
+    <p class="name-note">The name comes from PubChem, the chemistry database of the U.S. National Library of Medicine, and is the name of the structure you have drawn: it does not say whether that structure is your unknown. Your report tells your instructor that you used it.</p>
 
     <div class="structure-fields">
       <label class="field"><span class="field-name">Its name</span><input type="text" id="structure-name" autocomplete="off"></label>

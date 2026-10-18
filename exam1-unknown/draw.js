@@ -49,6 +49,60 @@
     return out;
   }
 
+  /**
+   * The drawing as SMILES, for looking its name up. Every atom is written in brackets with its
+   * hydrogens and charge spelled out ([CH3][CH2][OH]), so the reader needs no valence rules of its
+   * own; pieces are joined by dots. Returns '' for an empty drawing or one with an over-filled atom.
+   */
+  function smiles(mol) {
+    var n = mol.atoms.length;
+    if (!n) return '';
+    var adj = [], i, k;
+    for (i = 0; i < n; i++) adj.push([]);
+    mol.bonds.forEach(function (b, idx) {
+      adj[b.a].push({ to: b.b, order: b.order, k: idx });
+      adj[b.b].push({ to: b.a, order: b.order, k: idx });
+    });
+    var hs = [];
+    for (i = 0; i < n; i++) { var h = hydrogens(mol, i); if (h.over) return ''; hs.push(h.h); }
+    // first pass: which bonds the walk follows (the tree) and which close a ring
+    var seen = [], tree = {}, ring = {}, digits = {}, next = 1;
+    function walk(at, from) {
+      seen[at] = true;
+      adj[at].forEach(function (e) {
+        if (e.k === from) return;
+        if (!seen[e.to]) { tree[e.k] = true; walk(e.to, e.k); }
+        else if (!tree[e.k] && !ring[e.k]) { ring[e.k] = true; digits[e.k] = next++; }
+      });
+    }
+    function sym(order) { return order === 2 ? '=' : (order === 3 ? '#' : ''); }
+    function label(d) { return d < 10 ? String(d) : '%' + d; }
+    function atomText(at) {
+      var a = mol.atoms[at], c = a.charge || 0, h = hs[at];
+      return '[' + a.el + (h ? 'H' + (h > 1 ? h : '') : '') + (c > 0 ? '+' + (c > 1 ? c : '') : c < 0 ? '-' + (c < -1 ? -c : '') : '') + ']';
+    }
+    // second pass: write each atom, its ring closures, then its branches
+    var written = [], opened = {};
+    function write(at, from) {
+      written[at] = true;
+      var out = atomText(at);
+      adj[at].forEach(function (e) {
+        if (!ring[e.k]) return;
+        if (!opened[e.k]) { opened[e.k] = true; out += sym(e.order) + label(digits[e.k]); }
+        else out += label(digits[e.k]);
+      });
+      var kids = adj[at].filter(function (e) { return tree[e.k] && e.k !== from && !written[e.to]; });
+      kids.forEach(function (e, idx) {
+        var branch = sym(e.order) + write(e.to, e.k);
+        out += idx < kids.length - 1 ? '(' + branch + ')' : branch;
+      });
+      return out;
+    }
+    var parts = [];
+    for (i = 0; i < n; i++) if (!seen[i]) { walk(i, -1); parts.push(write(i, -1)); }
+    return parts.join('.');
+  }
+
   /** How many hydrogens an atom carries, and whether it has more bonds than it can take. */
   function hydrogens(mol, i) {
     var a = mol.atoms[i], used = bondSum(mol, i), vs = valences(a.el, a.charge);
@@ -522,7 +576,7 @@
   }
 
   var api = {
-    BOND: BOND, ELEMENTS: ELEMENTS, empty: empty, valences: valences, hydrogens: hydrogens, formula: formula,
+    BOND: BOND, ELEMENTS: ELEMENTS, empty: empty, valences: valences, hydrogens: hydrogens, formula: formula, smiles: smiles,
     pieces: pieces, ringThrough: ringThrough, addRing: addRing, atomAt: atomAt, join: join, freeDirection: freeDirection,
     removeAtoms: removeAtoms, svgMarkup: svgMarkup, Board: Board
   };

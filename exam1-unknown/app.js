@@ -41,7 +41,7 @@
   }
   function blankRows(kind, n) { var out = []; for (var i = 0; i < n; i++) out.push(blankRow(kind)); return out; }
 
-  function blankStructure() { return { mol: { atoms: [], bonds: [] }, name: '', condensed: '', why: { formula: '', ir: '', ms: '', nmr: '' } }; }
+  function blankStructure() { return { mol: { atoms: [], bonds: [] }, name: '', condensed: '', why: { formula: '', ir: '', ms: '', nmr: '' }, lookup: null }; }
 
   function blankState(code) {
     return {
@@ -1574,7 +1574,14 @@
   function bindStructure() {
     var st = state.structure;
     board = window.NmrDraw.Board($('board-svg'), {
-      onChange: function (mol) { state.structure.mol = mol; saveState(); showStructure(); }
+      onChange: function (mol) { state.structure.mol = mol; saveState(); showStructure(); clearName(); }
+    });
+    $('name-button').addEventListener('click', lookUpName);
+    $('name-use').addEventListener('click', function () {
+      var box = $('structure-name');
+      box.value = $('name-use').getAttribute('data-name');
+      box.dispatchEvent(new Event('input'));
+      box.focus();
     });
     board.load(st.mol);
     Array.prototype.forEach.call(document.querySelectorAll('.board-tools [data-tool]'), function (b) {
@@ -1599,6 +1606,43 @@
       box.addEventListener('input', function () { state.structure.why[k] = box.value; copy.textContent = box.value; saveState(); });
     });
     showStructure();
+  }
+
+  /**
+   * The name of what is drawn, looked up in PubChem (his choice, so that students who struggle can
+   * learn from the correct name). It names the drawing, never the unknown, and the report tells
+   * the instructor it was used.
+   */
+  var PUBCHEM_NAME = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/property/IUPACName,Title/JSON';
+  function clearName() { $('name-result').textContent = ''; $('name-use').hidden = true; }
+
+  function lookUpName() {
+    var out = $('name-result'), use = $('name-use'), f = structureCheck();
+    use.hidden = true;
+    if (!f) { out.textContent = 'Draw a structure first.'; return; }
+    if (f.over.length) { out.textContent = 'An atom has more bonds than it can take (circled in red): fix the drawing first.'; return; }
+    var smi = window.NmrDraw.smiles(state.structure.mol);
+    if (!smi) { out.textContent = 'This drawing cannot be named as it is.'; return; }
+    out.textContent = 'Looking the name up…';
+    var asked = smi;
+    fetch(PUBCHEM_NAME, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'smiles=' + encodeURIComponent(smi) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (window.NmrDraw.smiles(state.structure.mol) !== asked) return;     // the drawing changed meanwhile
+        var p = j && j.PropertyTable && j.PropertyTable.Properties && j.PropertyTable.Properties[0];
+        if (!p || !p.CID || !p.IUPACName) { out.textContent = 'PubChem has no name for this structure: check your drawing, it may not be a known compound.'; return; }
+        var common = String(p.Title || '');
+        if (/^[A-Z][a-z]/.test(common)) common = common.charAt(0).toLowerCase() + common.slice(1);
+        out.textContent = '';
+        out.appendChild(document.createTextNode('IUPAC name: '));
+        out.appendChild(el('b', null, p.IUPACName));
+        if (common && common.toLowerCase() !== p.IUPACName.toLowerCase()) out.appendChild(document.createTextNode(' · also called ' + common));
+        use.setAttribute('data-name', p.IUPACName);
+        use.hidden = false;
+        state.structure.lookup = { iupac: p.IUPACName, common: common, formula: f.text };
+        saveState();
+      })
+      .catch(function () { out.textContent = 'The name could not be looked up just now (no answer from PubChem). Try again in a moment.'; });
   }
 
   function showTools() {
@@ -1733,7 +1777,8 @@
     $('print-checks').textContent = 'Checked by the lab page for unknown ' + state.code + ': degrees of unsaturation ' + yes(formula && M.checkUnsaturation(state.dou, formula).ok === true) +
       '; ' + tables.join('; ') + '; retention time ' + yes(retentionOk()) + '; molecular ion ' + yes((verdicts.mm || {}).ppm === 1) + '; base peak ' + yes((verdicts.mb || {}).ppm === 1) +
       '. Formula of the structure drawn: ' + (f ? (M.subscripts(f.text) + (f.same ? ', the same as the unknown’s' : ', not the unknown’s')) : 'none drawn') +
-      '. The page does not check the structure, its name, the assignments or the explanations: mark them from the answer key.';
+      '.' + (st.lookup ? ' The student looked up a name with the button (last: ' + st.lookup.iupac + ').' : '') +
+      ' The page does not check the structure, its name, the assignments or the explanations: mark them from the answer key.';
   }
 
   function bindReport() {
