@@ -1840,6 +1840,10 @@
         // a click on the monitor in the room opens the spectrometer software (part 3)
         if (msg.item === 'console') openSoftware(true);
         break;
+      case 'woke':
+        // the first click on the monitor only wakes it from its screensaver
+        note('The computer is awake. Click its screen again to open the spectrometer software.', '', true);
+        break;
       case 'blocked':
         blockedSeen = true;
         note(M.reasonText(msg.reason), 'warn');
