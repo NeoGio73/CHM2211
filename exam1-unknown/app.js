@@ -61,7 +61,14 @@
       software: false,              // the spectrometer software has been opened: the room's monitor shows its status
       ir: null,                     // the last IR spectrum: { from, step, background, sample, t }
       irView: null, irBands: false, irThreshold: 10,
-      gc: null,                     // the last GC-MS run: { seed, done } (its chromatogram is asked for again after a reload)
+      gc: null,                     // the last GC-MS run: { seed, done, run, file, method } (its chromatogram is asked for again after a reload)
+      gcMethod: null,               // the method as set in the software's Method tab (first shown with one field wrong)
+      gcSaved: null,                // the method as last saved: { name, method }
+      gcFile: '',                   // the file name in the Run tab
+      gcTab: 'status',
+      gcChecked: false,             // the instrument's status has been looked at
+      gcTuneReport: null,           // the last EI Check's report
+      gcSubtract: true,             // the mass spectrum with the background taken away
       ms: null,                     // the mass spectrum last looked at: { minutes, peaks }
       msView: null, ticView: null,
       msFields: { rt: '', m: '', base: '' },
@@ -172,7 +179,7 @@
   }
 
   function updateNote() {
-    var text = M.nextStep(state.sample, state.routine, { solid: solid, recorded: irRecorded(), gc: !!state.gc, running: gcRunning });
+    var text = M.nextStep(state.sample, state.routine, lightInfo());
     if (persistent.kind === 'warn' && Date.now() < holdNoteUntil) return;
     persistent = { text: text, kind: '' };
     note(text, '', true);
@@ -212,12 +219,23 @@
     put('ir-record', irRecorded() ? 'Recorded' : '', irRecorded());
     $('clamp-button').setAttribute('aria-pressed', s.clamp ? 'true' : 'false');
     // the GC-MS
-    put('gc-fill', s.held === 'syringefull' ? 'Filled' : (state.gc ? 'Injected' : ''), s.held === 'syringefull' || !!state.gc);
+    var drops = s.gcDrops || 0;
+    put('gc-drop', !drops ? '' : (solid ? (drops === 1 ? 'A few crystals' : 'A lot of crystals') : (drops === 1 ? 'One drop' : drops + ' drops')), drops > 0);
+    put('gc-solvent', s.gcSolvent ? 'About 1 mL' : '', !!s.gcSolvent);
+    put('gc-cap', s.gcCapped ? 'Capped' : (s.gcSolvent && s.gcOpenSeconds > 60 ? 'Open: the solvent is evaporating' : ''), !!s.gcCapped);
+    $('gc-cap-button').textContent = s.gcCapped ? 'Take the cap off' : 'Cap it';
+    put('gc-ready', !state.gcChecked ? '' : (s.gcVacuum ? 'Ready' : 'Pumping down'), !!(s.gcVacuum && state.gcChecked));
+    put('gc-tune', { pass: 'Passed', leak: 'Failed: air', wet: 'Failed: water' }[s.gcTune] || '', s.gcTune === 'pass');
+    $('gc-nut-step').hidden = !(s.gcStart === 'leak' && (s.gcTune === 'leak' || s.gcNutTight));
+    put('gc-nut', s.gcNutTight ? 'Tightened' : '', !!s.gcNutTight);
+    put('gc-arm', gcArmed ? 'Waiting for your injection' : '', gcArmed || gcInjected || gcRunning);
+    put('gc-fill', s.held === 'syringefull' ? 'Filled' : (gcInjected ? 'Injected' : ''), s.held === 'syringefull' || gcInjected || gcRunning);
+    put('gc-inject', gcInjected ? 'On the column: press Start' : '', gcInjected || gcRunning);
     var runText = '';
     if (gcRunning && tic) runText = 'Running: ' + (tic.upTo * tic.step).toFixed(1) + ' min';
     else if (gcRunning) runText = 'Running';
     else if (state.gc) runText = 'Run finished';
-    put('gc-inject', runText, !!(state.gc && state.gc.done));
+    put('gc-start', runText, !!(state.gc && state.gc.done));
     $('air-button').setAttribute('aria-pressed', s.air ? 'true' : 'false');
     Array.prototype.forEach.call(document.querySelectorAll('#depth-buttons button'), function (b) { b.disabled = s.place !== 'gauge'; });
     var held = {
@@ -225,7 +243,9 @@
       solution: 'You are holding a pipet of the solution.', cap: 'You are holding a cap.', d2o: 'You are holding a pipet with a drop of D₂O.',
       tube: 'You are holding your tube.', spinner: 'You are holding the spinner with your tube in it.',
       irdrop: solid ? 'You are holding a spatula with a few crystals of your unknown.' : 'You are holding a pipet with a drop of your unknown.',
-      syringe: 'You are holding the empty syringe.', syringefull: 'You are holding the syringe with 1 µL of the GC sample.'
+      syringe: 'You are holding the empty syringe.', syringefull: 'You are holding the syringe with 1 µL of the GC sample.',
+      gcdrop: solid ? 'You are holding a spatula with a few crystals of your unknown.' : 'You are holding a pipet of your unknown.',
+      dcm: 'You are holding a pipet of dichloromethane.'
     }[s.held || ''];
     $('held-note').textContent = held || '';
     $('put-down').disabled = !s.held;
@@ -239,7 +259,9 @@
    */
   var attention = null;            // { key, text, snap }
   var lastPress = null;            // { key, t }: the step whose button was pressed last
-  function lightInfo() { return { solid: solid, recorded: irRecorded(), gc: !!state.gc, running: gcRunning }; }
+  function lightInfo() {
+    return { solid: solid, recorded: irRecorded(), gc: !!state.gc, running: gcRunning, armed: gcArmed, injected: gcInjected, checked: !!state.gcChecked };
+  }
 
   function stepLine(li, cls, text) {
     var node = li.querySelector('.' + cls);
@@ -283,6 +305,8 @@
           // already in the hand: picking it up again would put it down
           if (step === 'take syringe') return s.held !== 'syringe' && s.held !== 'syringefull';
           if (step === 'take irvial') return s.held !== 'irdrop';
+          if (step === 'take gcunknown') return s.held !== 'gcdrop';
+          if (step === 'take dcm') return s.held !== 'dcm';
           return true;
         }).map(function (step) {
           if ((step === 'use tube' || step === 'take tube') && s.tube >= 0) return step + ' ' + s.tube;
@@ -1162,9 +1186,186 @@
 
   var tic = null;            // the chromatogram: { step, values, upTo } (not saved: asked for again after a reload)
   var gcRunning = false, ticHover = null, ticDrag = null, msHover = null, msDrag = null;
+  var gcArmed = false, gcInjected = false;       // the room forgets both on a reload, so the page does too
+  var gcStatusShown = null, tuneTimer = null;
+
+  /** The method of the run on show (an old run had the fixed method of before 2026-10-22). */
+  function runMethod() { return state.gc && state.gc.run ? M.gcMethod(state.gc.run.method) : null; }
+  function runMinutes() { var m = runMethod(); return m ? M.gcMinutes(m) : M.GC.minutes; }
+  function runOven(t) { var m = runMethod(); return m ? M.gcOven(m, t) : M.ovenAt(t); }
+  function runDelay() { var m = runMethod(); return m ? m.delay : M.GC.delay; }
+  function runApex() {
+    var finished = tic && tic.upTo >= tic.values.length;
+    return finished ? M.ticApex(tic.values, tic.step, runDelay()) : null;
+  }
+
+  var GC_TABS = ['status', 'tune', 'method', 'run'];
+  function showGcTab(tab) {
+    if (GC_TABS.indexOf(tab) < 0) tab = 'status';
+    state.gcTab = tab;
+    GC_TABS.forEach(function (t) {
+      $('gtab-' + t).setAttribute('aria-selected', t === tab ? 'true' : 'false');
+      $('gtab-' + t).tabIndex = t === tab ? 0 : -1;
+      $('gpanel-' + t).hidden = t !== tab;
+    });
+    if (tab === 'tune') drawTune();
+  }
+
+  function receiveGcStatus(msg) {
+    gcStatusShown = msg;
+    if (msg.vacuum) state.gcChecked = true;
+    showGcStatus();
+    showRoutine(); saveState();
+  }
+
+  function showGcStatus() {
+    var g = gcStatusShown, s = state.sample || {};
+    function light(id, ok, word) {
+      $('gc-light-' + id).setAttribute('data-state', ok === null ? '' : (ok ? 'ok' : 'bad'));
+      $('gc-light-' + id + '-word').textContent = word;
+    }
+    if (!g) {
+      light('vacuum', null, ''); light('heaters', null, '');
+      $('gc-foreline').textContent = '—'; $('gc-turbo').textContent = '—';
+      $('gc-status-msg').textContent = 'Press Check status to read the instrument.';
+      return;
+    }
+    light('vacuum', !!g.vacuum, g.vacuum ? 'Ready' : 'Not ready');
+    light('heaters', true, 'Ready');
+    $('gc-foreline').textContent = String(g.foreline);
+    $('gc-turbo').textContent = String(g.turbo);
+    var text;
+    if (g.waiting === 'vacuum') text = 'Pumping down: about ' + g.left + ' s left (sped up; on a real instrument this takes half an hour or more).';
+    else if (g.waiting === 'dry') text = 'Pumping away the water: about ' + g.left + ' s left (sped up; really an hour or more).';
+    else if (!g.vacuum) text = 'The vacuum is not ready: the instrument was vented and the turbo pump is still spinning up. Wait for the pumps before you go on.';
+    else text = 'The instrument is pumped down and at temperature. Check its tune next.';
+    $('gc-status-msg').textContent = text;
+    $('gc-wait-button').disabled = !!g.waiting;
+  }
+
+  /** The EI Check: the calibrant's peak at m/z 69 swept while it runs, then the report. */
+  var tuneAnim = null;
+  function receiveTuneStart(msg) {
+    state.gcTuneReport = null;
+    tuneAnim = { started: Date.now(), ms: (msg.seconds || 10) * 1000 };
+    $('tune-report').textContent = '';
+    $('tune-msg').textContent = 'EI Check running: leak check, then the calibrant’s peaks…';
+    clearInterval(tuneTimer);
+    tuneTimer = setInterval(function () {
+      drawTune();
+      if (!tuneAnim || Date.now() - tuneAnim.started > tuneAnim.ms + 500) clearInterval(tuneTimer);
+    }, 80);
+    showGcTab('tune');
+    saveState();
+  }
+
+  function receiveTuneReport(msg) {
+    tuneAnim = null;
+    clearInterval(tuneTimer);
+    state.gcTuneReport = msg;
+    showTuneReport();
+    drawTune();
+    showRoutine(); saveState();
+  }
+
+  function showTuneReport() {
+    var r = state.gcTuneReport, box = $('tune-report');
+    box.textContent = '';
+    if (!r) { $('tune-msg').textContent = 'Run EI Check before the first sample of the day.'; return; }
+    var table = el('table', { 'class': 'gc-dash' });
+    var head = el('tr');
+    ['', 'Found', 'Limit', ''].forEach(function (t) { head.appendChild(el('th', { scope: 'col' }, t)); });
+    var thead = el('thead'); thead.appendChild(head); table.appendChild(thead);
+    var body = el('tbody');
+    M.tuneRows(r).forEach(function (row) {
+      var tr = el('tr');
+      tr.appendChild(el('th', { scope: 'row' }, row[0]));
+      tr.appendChild(el('td', null, String(row[1])));
+      tr.appendChild(el('td', null, row[2]));
+      tr.appendChild(el('td', { 'class': row[3] ? 'gc-pass' : 'gc-fail' }, row[3] ? 'Pass' : 'Fail'));
+      body.appendChild(tr);
+    });
+    table.appendChild(body);
+    box.appendChild(table);
+    $('tune-msg').textContent = r.outcome === 'pass'
+      ? 'EI Check passed: the instrument is ready for samples.'
+      : (r.outcome === 'leak'
+        ? 'EI Check failed: nitrogen and oxygen are high and the mass axis has drifted, the signs of air leaking in. A common cause is a loose column nut where the GC column enters the mass spectrometer: tighten it a quarter turn, then run EI Check again.'
+        : 'EI Check failed: the water background is high. The instrument was opened recently and is still pumping out moisture: wait for the pumps (Status), then run EI Check again.');
+  }
+
+  function drawTune() {
+    var c = $('tune-canvas');
+    if (!c || $('gpanel-tune').hidden) return;
+    var s = surface(c, 0.17, 150), g = s.g, W = s.W, H = s.H, dpr = s.dpr;
+    var x0 = 50 * dpr, x1 = W - 14 * dpr, y0 = 14 * dpr, y1 = H - 34 * dpr;
+    g.lineWidth = 1; g.strokeStyle = '#8d9994'; g.fillStyle = '#17211e'; g.textAlign = 'center';
+    function mzToPx(mz) { return x0 + (mz - 68) / 2 * (x1 - x0); }
+    for (var mz = 68; mz <= 70.001; mz += 0.5) {
+      g.beginPath(); g.moveTo(mzToPx(mz), y1); g.lineTo(mzToPx(mz), y1 + 5 * dpr); g.stroke();
+      g.fillText(mz.toFixed(1), mzToPx(mz), y1 + 18 * dpr);
+    }
+    g.beginPath(); g.moveTo(x0, y0); g.lineTo(x0, y1); g.lineTo(x1, y1); g.stroke();
+    axisLabel(g, 'm/z (the calibrant’s peak at 69)', (x0 + x1) / 2, H - 4 * dpr, false);
+    var r = state.gcTuneReport, frac = 1;
+    if (tuneAnim) frac = Math.min(1, (Date.now() - tuneAnim.started) / tuneAnim.ms);
+    else if (!r) { message(g, W, H, 'EI Check draws the calibrant’s peak here.'); return; }
+    var centre = 69 + (r && r.outcome === 'leak' ? 0.30 : 0.05), width = 0.25;
+    g.strokeStyle = '#1c4c9a'; g.lineWidth = Math.max(1, dpr * 1.5); g.beginPath();
+    var end = 68 + 2 * frac;
+    for (var m = 68; m <= end; m += 0.005) {
+      var y = Math.exp(-0.5 * Math.pow((m - centre) / (width / 2.355), 2));
+      var px = mzToPx(m), py = y1 - y * 0.9 * (y1 - y0);
+      if (m === 68) g.moveTo(px, py); else g.lineTo(px, py);
+    }
+    g.stroke();
+    g.strokeStyle = 'rgba(171, 42, 28, 0.5)'; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(mzToPx(69), y0); g.lineTo(mzToPx(69), y1); g.stroke();
+  }
+
+  /** The Method tab: a select for each field, the method's name and Save. */
+  function methodNow() {
+    if (!state.gcMethod) state.gcMethod = M.gcDefaultMethod(state.code, formula ? M.nominalMass(formula) : 0);
+    return state.gcMethod;
+  }
+  var METHOD_FIELDS = { inlet: 'gm-inlet', split: 'gm-split', start: 'gm-start', ramp: 'gm-ramp', scanHigh: 'gm-scan', scanTime: 'gm-scantime', delay: 'gm-delay' };
+  function showMethod() {
+    if (!formula && !state.gcMethod) return;      // the default waits for the formula (its scan range depends on the mass)
+    var m = methodNow();
+    Object.keys(METHOD_FIELDS).forEach(function (k) { $(METHOD_FIELDS[k]).value = String(m[k]); });
+    $('gm-name').value = state.gcSaved ? state.gcSaved.name : ($('gm-name').value || '');
+    showSavedMethod();
+  }
+  function showSavedMethod() {
+    var sv = state.gcSaved;
+    var changed = sv && JSON.stringify(M.gcMethod(sv.method)) !== JSON.stringify(M.gcMethod(state.gcMethod));
+    $('gr-method').textContent = sv ? sv.name + (changed ? ' (changed since it was saved: save it again)' : '') : '—';
+    if (!sv) $('gm-msg').textContent = '';
+    else if (changed) $('gm-msg').textContent = 'You have changed the method since you saved it: save it again before you run.';
+    else $('gm-msg').textContent = 'Saved as ' + sv.name + '.';
+  }
+
+  function runThisSample() {
+    var s = state.sample || {}, sv = state.gcSaved, file = $('gr-file').value.trim();
+    state.gcFile = file;
+    var why = '';
+    if (gcRunning) why = 'A run is under way: wait for it to finish.';
+    else if (!sv) why = 'Save a method first (Method tab).';
+    else if (JSON.stringify(M.gcMethod(sv.method)) !== JSON.stringify(M.gcMethod(state.gcMethod))) why = 'You changed the method after saving it: save it again (Method tab).';
+    else if (!file) why = 'Give the run a file name.';
+    else if (!M.gcNameOk(file)) why = 'The software takes letters, figures, - _ and . in a file name: no spaces or other signs.';
+    else if (!s.gcVacuum) why = 'The vacuum is not ready (Status).';
+    $('gr-msg').textContent = why;
+    if (why) return;
+    sendBench('GcArm', JSON.stringify(M.gcMethod(sv.method)));
+    saveState();
+  }
 
   function receiveGcStart(msg) {
-    state.gc = { seed: msg.seed, done: false };
+    var sv = state.gcSaved;
+    state.gc = { seed: msg.seed, done: false, run: msg.run || null, file: state.gcFile, method: sv ? sv.name : '' };
+    gcArmed = false; gcInjected = false;
+    $('gr-msg').textContent = 'Running ' + state.gcFile + '.';
     state.ms = null;
     state.msView = null;
     state.ticView = null;
@@ -1187,7 +1388,7 @@
   }
 
   function receiveMs(msg) {
-    state.ms = { minutes: msg.minutes, peaks: msg.peaks || [] };
+    state.ms = { minutes: msg.minutes, peaks: msg.peaks || [], subtract: msg.subtract !== false };
     drawTic(); drawMs(); scheduleFigures(); saveState();
   }
 
@@ -1195,18 +1396,19 @@
     var text;
     if (tic && gcRunning) {
       var t = tic.upTo * tic.step;
-      text = 'Run under way: ' + t.toFixed(1) + ' of ' + M.GC.minutes.toFixed(1) + ' min · oven ' + Math.round(M.ovenAt(t)) + ' °C' + (t < M.GC.delay ? ' · the detector stays off for the first 2 min, while the solvent comes off' : '');
-    } else if (gcRunning) text = 'Injected: the run has started.';
-    else if (tic) text = 'Run finished. The oven held 35 °C for 2 min, then rose 15 °C a minute to 280 °C. Click your compound’s peak to see its mass spectrum.';
+      var d = runDelay();
+      text = 'Run under way: ' + t.toFixed(1) + ' of ' + runMinutes().toFixed(1) + ' min · oven ' + Math.round(runOven(t)) + ' °C' + (t < d ? ' · the detector stays off for the first ' + d + ' min (the solvent delay)' : '');
+    } else if (gcRunning) text = 'Started: the run is under way.';
+    else if (tic) text = 'Run finished' + (state.gc && state.gc.file ? ' (' + state.gc.file + ')' : '') + '. ' + (runMethod() ? 'Method: ' + M.gcMethodLine(runMethod()) + '.' : 'The oven held 35 °C for 2 min, then rose 15 °C a minute to 280 °C.') + ' Click your compound’s peak to see its mass spectrum.';
     else if (state.gc) text = 'Fetching the run…';
-    else text = 'No run yet: inject your sample (part 1, the GC-MS tab).';
+    else text = 'No run yet: make up the GC vial and set up the run (part 1, the GC-MS tab, and the software above).';
     $('gc-status').textContent = text;
   }
 
   function drawTic(c, report) {
     var s = surface(c || $('tic-canvas'), 0.2, 170, report), g = s.g, W = s.W, H = s.H, dpr = s.dpr;
     var x0 = 50 * dpr, x1 = W - 14 * dpr, y0 = 12 * dpr, y1 = H - 40 * dpr, i;
-    var v = (!report && state.ticView) || { from: 0, to: M.GC.minutes };
+    var v = (!report && state.ticView) || { from: 0, to: runMinutes() };
     function tToPx(t) { return x0 + (t - v.from) / (v.to - v.from) * (x1 - x0); }
     function pxToT(px) { return v.from + (px - x0) / (x1 - x0) * (v.to - v.from); }
     if (!report) drawTic.map = { pxToT: pxToT };
@@ -1247,7 +1449,7 @@
       var th = pxToT(ticHover);
       g.strokeStyle = 'rgba(171, 42, 28, 0.55)'; g.lineWidth = 1;
       g.beginPath(); g.moveTo(ticHover, y0); g.lineTo(ticHover, y1); g.stroke();
-      $('tic-readout').textContent = th.toFixed(2) + ' min · oven ' + Math.round(M.ovenAt(th)) + ' °C · click for the mass spectrum here';
+      $('tic-readout').textContent = th.toFixed(2) + ' min · oven ' + Math.round(runOven(th)) + ' °C · click for the mass spectrum here';
     }
   }
 
@@ -1284,7 +1486,7 @@
     axisLabel(g, 'm/z', (x0 + x1) / 2, H - 6 * dpr, false);
     axisLabel(g, 'Relative abundance (%)', 14 * dpr, (y0 + y1) / 2, true);
     g.fillStyle = '#4b5854'; g.textAlign = 'left';
-    g.fillText('Mass spectrum at ' + state.ms.minutes.toFixed(2) + ' min', x0, 16 * dpr);
+    g.fillText('Mass spectrum at ' + state.ms.minutes.toFixed(2) + ' min' + (state.ms.subtract === false ? ' (no background subtraction)' : ''), x0, 16 * dpr);
 
     if (!report && msDrag && Math.abs(msDrag.x1 - msDrag.x0) > 3) {
       g.fillStyle = 'rgba(28, 76, 154, 0.10)';
@@ -1320,14 +1522,14 @@
         if (!tic || !drawTic.map) return;
         var ta = drawTic.map.pxToT(a), tb = drawTic.map.pxToT(b);
         if (Math.abs(ta - tb) < 0.05) return;
-        state.ticView = { from: Math.max(0, Math.min(ta, tb)), to: Math.min(M.GC.minutes, Math.max(ta, tb)) };
+        state.ticView = { from: Math.max(0, Math.min(ta, tb)), to: Math.min(runMinutes(), Math.max(ta, tb)) };
         drawTic(); saveState();
       },
       click: function (x) {
         if (!tic || !drawTic.map) return;
         var t = drawTic.map.pxToT(x);
         if (t < 0 || t > tic.upTo * tic.step) return;
-        sendBench('MsAt', t.toFixed(2));
+        sendBench('MsAt', t.toFixed(2) + (state.gcSubtract ? '' : '|raw'));
       },
       full: function () { state.ticView = null; drawTic(); saveState(); }
     });
@@ -1354,13 +1556,53 @@
         else { scheduleCheck(400); if (key === 'm') showLost(); }
       });
     });
-    window.addEventListener('resize', function () { drawIr(); drawTic(); drawMs(); });
+    window.addEventListener('resize', function () { drawIr(); drawTic(); drawMs(); drawTune(); });
+
+    // the instrument's software
+    GC_TABS.forEach(function (t, i) {
+      var b = $('gtab-' + t);
+      b.addEventListener('click', function () { showGcTab(t); saveState(); });
+      b.addEventListener('keydown', function (e) {
+        var j = e.key === 'ArrowRight' ? i + 1 : (e.key === 'ArrowLeft' ? i - 1 : -9);
+        if (j === -9) return;
+        e.preventDefault();
+        var next = GC_TABS[(j + GC_TABS.length) % GC_TABS.length];
+        showGcTab(next); $('gtab-' + next).focus(); saveState();
+      });
+    });
+    Object.keys(METHOD_FIELDS).forEach(function (k) {
+      $(METHOD_FIELDS[k]).addEventListener('change', function () {
+        methodNow()[k] = Number($(METHOD_FIELDS[k]).value);
+        showSavedMethod(); saveState();
+      });
+    });
+    $('gm-save').addEventListener('click', function () {
+      var name = $('gm-name').value.trim();
+      if (!M.gcNameOk(name)) { $('gm-msg').textContent = name ? 'The software takes letters, figures, - _ and . in a name: no spaces or other signs.' : 'Give the method a name.'; return; }
+      state.gcSaved = { name: name, method: M.gcMethod(methodNow()) };
+      showSavedMethod(); saveState();
+    });
+    $('gr-file').value = state.gcFile || '';
+    $('gr-file').addEventListener('input', function () { state.gcFile = $('gr-file').value.trim(); saveState(); });
+    $('gr-run').addEventListener('click', runThisSample);
+    $('gc-goto-method').addEventListener('click', function () {
+      showGcTab(state.gcSaved ? 'run' : 'method'); saveState();
+      $('gc-software').scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'start' });
+    });
+    $('gc-subtract').checked = state.gcSubtract !== false;
+    $('gc-subtract').addEventListener('change', function () {
+      state.gcSubtract = $('gc-subtract').checked;
+      if (state.ms && state.gc) sendBench('MsAt', state.ms.minutes.toFixed(2) + (state.gcSubtract ? '' : '|raw'));
+      saveState();
+    });
+    showGcTab(state.gcTab);
+    showGcStatus();
+    showTuneReport();
   }
 
   /** The retention time is checked here, against the top of the student's own chromatogram. */
   function checkRetention() {
-    var finished = tic && tic.upTo >= tic.values.length;
-    var apex = finished ? M.ticApex(tic.values, tic.step) : null;
+    var apex = runApex();
     var r = M.checkRetention(state.msFields.rt, apex);
     if (apex === null && state.gc) r = { ok: null, message: '' };       // the run is still coming
     mark('ms-rt', r.ok === true ? 1 : (r.ok === false ? -1 : 0));
@@ -1706,8 +1948,11 @@
       figure(NMR_CAPTIONS[e.key] + ', ' + d.scans + (d.scans === 1 ? ' scan.' : ' scans.'), function (c) { renderNmr(c, e.key, true); });
     });
     if (state.ir) figure('IR (ATR), the pure compound' + (state.ir.sample ? '' : ': nothing on the crystal') + (state.ir.background ? '.' : ', with no background recorded.'), function (c) { drawIr(c, true); });
-    if (tic) figure('Gas chromatogram (total ion current): oven 35 °C for 2 min, then 15 °C a minute to 280 °C.' + (state.ms ? ' The blue line marks where the mass spectrum was taken.' : ''), function (c) { drawTic(c, true); });
-    if (state.ms) figure('Mass spectrum (EI, 70 eV) at ' + state.ms.minutes.toFixed(2) + ' min.', function (c) { drawMs(c, true); });
+    if (tic) figure('Gas chromatogram (total ion current)' + (state.gc && state.gc.file ? ', file ' + state.gc.file : '') + '. '
+      + (runMethod() ? 'Method' + (state.gc.method ? ' ' + state.gc.method : '') + ': ' + M.gcMethodLine(runMethod()) + '. ' : 'Oven 35 °C for 2 min, then 15 °C a minute to 280 °C. ')
+      + M.tuneLine(state.gc && state.gc.run ? ({ ok: 'pass', leak: 'leak', wet: 'wet' }[state.gc.run.tune] || '') : '').replace('EI Check', 'At the time of the run, the EI Check')
+      + (state.ms ? ' The blue line marks where the mass spectrum was taken.' : ''), function (c) { drawTic(c, true); });
+    if (state.ms) figure('Mass spectrum (EI, 70 eV) at ' + state.ms.minutes.toFixed(2) + ' min' + (state.ms.subtract === false ? ', no background subtraction.' : ', background subtracted.'), function (c) { drawMs(c, true); });
     if (!n) box.appendChild(el('p', { 'class': 'soft' }, 'No spectra yet: the ones you record will appear here.'));
   }
 
@@ -1732,8 +1977,7 @@
   var TABLES = [['h', 'Table 1'], ['c', 'Table 2'], ['ir', 'Table 3'], ['mf', 'Table 4']];
 
   function retentionOk() {
-    var finished = tic && tic.upTo >= tic.values.length;
-    return M.checkRetention(state.msFields.rt, finished ? M.ticApex(tic.values, tic.step) : null).ok === true;
+    return M.checkRetention(state.msFields.rt, runApex()).ok === true;
   }
 
   function updateReportStatus() {
@@ -1826,7 +2070,9 @@
           showFormula();
           showShims();
           replayRecordings();
-          if (state.gc && state.gc.seed) sendBench('ReplayGc', String(state.gc.seed));
+          if (state.gc && state.gc.run) sendBench('ReplayGc', JSON.stringify(state.gc.run));
+          else if (state.gc && state.gc.seed) sendBench('ReplayGc', String(state.gc.seed));
+          showMethod();
           showReadingStatus();
           scheduleCheck(0);
           sendBench('WatchLock', state.tab === 'lock' || state.tab === 'shim' ? '1' : '0');
@@ -1908,6 +2154,30 @@
         break;
       case 'gcstart':
         receiveGcStart(msg);
+        break;
+      case 'gcstatus':
+        receiveGcStatus(msg);
+        break;
+      case 'tunestart':
+        receiveTuneStart(msg);
+        break;
+      case 'tunereport':
+        receiveTuneReport(msg);
+        break;
+      case 'gcarmed':
+        gcArmed = true;
+        $('gr-msg').textContent = 'Waiting for your sample (Start When Ready): inject 1 µL by hand at the port, then press Start on the GC.';
+        showRoutine(); updateNote();
+        break;
+      case 'gcinjected':
+        gcInjected = true;
+        note('Injected. Press Start on the GC now: the sample is sitting on the column.', '', true);
+        showRoutine(); updateNote();
+        break;
+      case 'gcnostart':
+        gcInjected = false;
+        note('Start was never pressed: the sample sat on the column too long and is lost. It will leave a ghost peak in your next run. Fill the syringe again, inject, and press Start straight away.', 'warn');
+        showRoutine(); updateNote();
         break;
       case 'tic':
         receiveTic(msg);

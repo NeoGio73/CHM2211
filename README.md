@@ -16,12 +16,12 @@ Each student is given an unknown compound, by a five-character code at the top o
 
 | Part | What the student does |
 | --- | --- |
-| 1. At the bench | Makes up an NMR sample in CDCl₃, sets its depth in the spinner and lowers it into the magnet; records an IR spectrum on an ATR crystal; injects a sample into a GC-MS |
+| 1. At the bench | Makes up an NMR sample in CDCl₃, sets its depth in the spinner and lowers it into the magnet; records an IR spectrum on an ATR crystal; makes up a GC vial and injects it by hand into a GC-MS |
 | 2. The formula | Works out the degrees of unsaturation from the molecular formula |
 | 3. The spectrometer | Locks, shims, records ¹H, ¹³C and DEPT-135 spectra, then processes them: Fourier transform, phase, baseline, reference, peak picking and integration |
 | 4. What the spectra show | Reads every ¹H and ¹³C signal into tables, which the page checks |
 | 5. The IR spectrum | Reads the important bands |
-| 6. The mass spectrum | Reads the retention time, the molecular ion, the base peak and the main fragments |
+| 6. The GC-MS | Runs the instrument's software: checks its status, runs the EI Check (some students meet a vented, leaking or wet instrument), sets and saves the method, sets up the run and presses Start on the GC. Then reads the retention time, the molecular ion, the base peak and the main fragments |
 | 7. Your structure | Draws the structure, names it, and explains how each spectrum supports it |
 | 8. Turn in | Prints the report, or saves it as a PDF, with every spectrum recorded |
 

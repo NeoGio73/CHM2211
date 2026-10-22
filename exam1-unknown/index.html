@@ -20,7 +20,7 @@
 
   <section class="part" id="part-sample" aria-labelledby="sample-title">
     <h2 id="sample-title"><span class="step" aria-hidden="true">1</span>At the bench</h2>
-    <p class="lede">Your unknown is on the bench three times over: in the vial on the left, to make up the NMR sample; pure, in a small vial beside the IR; and dissolved in dichloromethane, in a GC vial in front of the GC-MS. Work in the room itself (click a thing to pick it up, then click where it goes) or with the buttons beside it.</p>
+    <p class="lede">Your unknown is on the bench three times over: in the vial on the left, to make up the NMR sample; pure, in a small vial beside the IR; and in a vial in front of the GC-MS, beside an empty GC vial and the dichloromethane you dissolve it in. Work in the room itself (click a thing to pick it up, then click where it goes) or with the buttons beside it.</p>
 
     <div class="bench-layout">
       <div class="stage-column">
@@ -152,18 +152,58 @@
         </ol>
 
         <ol class="routine" id="routine-ms" role="tabpanel" aria-labelledby="rtab-ms" hidden>
+          <li class="routine-step" data-done="gc-drop">
+            <span class="routine-name">One drop of your unknown into the GC vial <span class="soft">(a few crystals, for a solid)</span></span>
+            <span class="routine-buttons"><button type="button" class="quiet-button" data-steps="take gcunknown|use gcvial|putback">Add a drop</button><button type="button" class="quiet-button" data-steps="take gcunknown|use gcvial 20">Add a dropperful</button></span>
+            <span class="routine-state" id="state-gc-drop"></span>
+          </li>
+          <li class="routine-step" data-done="gc-solvent">
+            <span class="routine-name">Dichloromethane to the vial’s shoulder <span class="soft">(about 1 mL)</span></span>
+            <span class="routine-buttons"><button type="button" class="quiet-button" data-steps="take dcm|use gcvial">Add dichloromethane</button></span>
+            <span class="routine-state" id="state-gc-solvent"></span>
+          </li>
+          <li class="routine-step" data-done="gc-cap">
+            <span class="routine-name">Cap the vial</span>
+            <span class="routine-buttons"><button type="button" class="quiet-button" data-steps="capgc" id="gc-cap-button">Cap it</button></span>
+            <span class="routine-state" id="state-gc-cap"></span>
+          </li>
+          <li class="routine-step" data-done="gc-ready">
+            <span class="routine-name">Is the instrument ready? <span class="soft">(part 6, Status)</span></span>
+            <span class="routine-buttons"><button type="button" class="quiet-button" data-steps="gc status">Check status</button><button type="button" class="quiet-button" data-steps="gc wait">Wait for the pumps</button></span>
+            <span class="routine-state" id="state-gc-ready"></span>
+          </li>
+          <li class="routine-step" data-done="gc-tune">
+            <span class="routine-name">Check the tune <span class="soft">(part 6, Tune)</span></span>
+            <span class="routine-buttons"><button type="button" class="quiet-button" data-steps="gc tune">EI Check</button></span>
+            <span class="routine-state" id="state-gc-tune"></span>
+          </li>
+          <li class="routine-step" data-done="gc-nut" id="gc-nut-step" hidden>
+            <span class="routine-name">Tighten the column nut <span class="soft">(a quarter turn, where the transfer line enters the mass spectrometer)</span></span>
+            <span class="routine-buttons"><button type="button" class="quiet-button" data-steps="gc nut">Tighten it</button></span>
+            <span class="routine-state" id="state-gc-nut"></span>
+          </li>
+          <li class="routine-step" data-done="gc-arm">
+            <span class="routine-name">Set the method, then Run This Sample <span class="soft">(part 6, Method and Run)</span></span>
+            <span class="routine-buttons"><button type="button" class="quiet-button" id="gc-goto-method">Go to the method</button></span>
+            <span class="routine-state" id="state-gc-arm"></span>
+          </li>
           <li class="routine-step" data-done="gc-fill">
             <span class="routine-name">1 µL from the GC vial into the syringe</span>
             <span class="routine-buttons"><button type="button" class="quiet-button" data-steps="take syringe|use gcvial">Fill the syringe</button></span>
             <span class="routine-state" id="state-gc-fill"></span>
           </li>
           <li class="routine-step" data-done="gc-inject">
-            <span class="routine-name">Inject it: the run starts <span class="soft">(the chromatogram is in part 6)</span></span>
+            <span class="routine-name">Inject it at the port</span>
             <span class="routine-buttons"><button type="button" class="quiet-button" data-steps="use port">Inject</button></span>
             <span class="routine-state" id="state-gc-inject"></span>
           </li>
+          <li class="routine-step" data-done="gc-start">
+            <span class="routine-name">Press Start on the GC <span class="soft">(the chromatogram is in part 6)</span></span>
+            <span class="routine-buttons"><button type="button" class="quiet-button" data-steps="gc start">Start</button></span>
+            <span class="routine-state" id="state-gc-start"></span>
+          </li>
         </ol>
-        <p class="routine-aside" id="ms-aside" hidden>The GC vial was made up for you: a little of your unknown dissolved in dichloromethane. A run takes 18 minutes on a real GC-MS; here it takes about 40 seconds.</p>
+        <p class="routine-aside" id="ms-aside" hidden>Make up the GC vial yourself: enough of your unknown to see, not enough to overload the column. A run takes about 21 minutes on a real GC-MS; here it takes under a minute.</p>
         <p class="held-note" id="held-note" role="status"></p>
         <div class="routine-foot">
           <button type="button" class="quiet-button" id="put-down" data-steps="putback">Put down what you are holding</button>
@@ -373,7 +413,81 @@
 
   <section class="part" id="part-ms" aria-labelledby="ms-title">
     <h2 id="ms-title"><span class="step" aria-hidden="true">6</span>The mass spectrum</h2>
-    <p class="lede">The gas chromatograph separates what was injected; as each compound leaves the column, the mass spectrometer strikes it with electrons (70 eV) and sorts the ions by mass. Inject your sample (part 1, the GC-MS tab) and the chromatogram builds up below. Then click the top of your compound's peak to see its mass spectrum.</p>
+    <p class="lede">The gas chromatograph separates what was injected; as each compound leaves the column, the mass spectrometer strikes it with electrons (70 eV) and sorts the ions by mass. You run it as an operator does: check that it is ready, check its tune, set the method, set up the run, then inject by hand and press Start on the GC. What you choose changes the chromatogram and the spectrum you get. Then click the top of your compound's peak to see its mass spectrum.</p>
+
+    <div class="instrument gc-software" id="gc-software">
+      <div class="tabs" role="tablist" aria-label="GC-MS software">
+        <button type="button" role="tab" class="tab" id="gtab-status" aria-controls="gpanel-status" aria-selected="true">Status</button>
+        <button type="button" role="tab" class="tab" id="gtab-tune" aria-controls="gpanel-tune" aria-selected="false">Tune</button>
+        <button type="button" role="tab" class="tab" id="gtab-method" aria-controls="gpanel-method" aria-selected="false">Method</button>
+        <button type="button" role="tab" class="tab" id="gtab-run" aria-controls="gpanel-run" aria-selected="false">Run</button>
+      </div>
+
+      <div class="tab-panel" role="tabpanel" id="gpanel-status" aria-labelledby="gtab-status">
+        <div class="gc-lights">
+          <span class="gc-light" id="gc-light-vacuum" data-state=""><span class="gc-lamp" aria-hidden="true"></span><span>Vacuum</span> <span class="gc-light-word" id="gc-light-vacuum-word"></span></span>
+          <span class="gc-light" id="gc-light-heaters" data-state=""><span class="gc-lamp" aria-hidden="true"></span><span>Heaters</span> <span class="gc-light-word" id="gc-light-heaters-word"></span></span>
+        </div>
+        <table class="gc-dash">
+          <tbody>
+            <tr><th scope="row">MS transfer line</th><td>250 / 250 °C</td></tr>
+            <tr><th scope="row">Ion source</th><td id="gc-source">275 / 275 °C</td></tr>
+            <tr><th scope="row">Foreline pressure</th><td><span id="gc-foreline">—</span> mTorr</td></tr>
+            <tr><th scope="row">Turbo pump</th><td><span id="gc-turbo">—</span>%</td></tr>
+            <tr><th scope="row">Column flow (helium)</th><td>1.2 / 1.2 mL/min</td></tr>
+            <tr><th scope="row">Carrier supply</th><td>1,800 psi / 80 psi</td></tr>
+          </tbody>
+        </table>
+        <div class="button-row"><button type="button" class="quiet-button" data-steps="gc status">Check status</button> <button type="button" class="quiet-button" data-steps="gc wait" id="gc-wait-button">Wait for the pumps</button></div>
+        <p class="panel-msg" id="gc-status-msg" role="status"></p>
+      </div>
+
+      <div class="tab-panel" role="tabpanel" id="gpanel-tune" aria-labelledby="gtab-tune" hidden>
+        <div class="gc-tune-types">
+          <button type="button" class="primary-button" data-steps="gc tune" id="gc-tune-run">EI Check</button>
+          <button type="button" class="quiet-button" disabled>EI Tune</button>
+          <button type="button" class="quiet-button" disabled>EI Full Tune</button>
+        </div>
+        <p class="panel-intro">EI Check runs a leak check, confirms the mass calibration with the calibrant (PFTBA) and writes a report. EI Tune and EI Full Tune retune the instrument; Full Tune takes much longer and is for when the check is not good enough.</p>
+        <div class="spectrum-wrap"><canvas id="tune-canvas" class="chart" width="1200" height="200" aria-label="The calibrant's peak at m/z 69 as it is acquired"></canvas></div>
+        <div id="tune-report" class="tune-report"></div>
+        <p class="panel-msg" id="tune-msg" role="status"></p>
+      </div>
+
+      <div class="tab-panel" role="tabpanel" id="gpanel-method" aria-labelledby="gtab-method" hidden>
+        <p class="panel-intro">The method as it stands is not right in every field: read each one before you save it.</p>
+        <div class="gc-method">
+          <fieldset>
+            <legend>GC</legend>
+            <label>Inlet temperature <select id="gm-inlet"><option value="100">100 °C</option><option value="225">225 °C</option><option value="350">350 °C</option></select></label>
+            <label>Split ratio <select id="gm-split"><option value="0">splitless</option><option value="10">10:1</option><option value="33">33:1</option><option value="100">100:1</option></select></label>
+            <label>Oven: start at <select id="gm-start"><option value="35">35 °C</option><option value="50">50 °C</option><option value="80">80 °C</option></select></label>
+            <p class="gc-fixed">Hold 2 min, then</p>
+            <label>Ramp <select id="gm-ramp"><option value="5">5 °C/min</option><option value="15">15 °C/min</option><option value="40">40 °C/min</option></select></label>
+            <p class="gc-fixed">to 280 °C, held 4 min. Carrier: helium, constant flow 1.2 mL/min.</p>
+          </fieldset>
+          <fieldset>
+            <legend>MS</legend>
+            <p class="gc-fixed">Transfer line 250 °C · ion source 275 °C · EI, 70 eV</p>
+            <label>Scan range <select id="gm-scan"><option value="150">m/z 15–150</option><option value="400">m/z 15–400</option><option value="650">m/z 15–650</option></select></label>
+            <label>Scan time <select id="gm-scantime"><option value="0.05">0.05 s</option><option value="0.2">0.2 s</option><option value="1">1.0 s</option></select></label>
+            <label>Solvent delay <select id="gm-delay"><option value="0">0 min</option><option value="2">2.0 min</option><option value="5">5.0 min</option></select></label>
+          </fieldset>
+        </div>
+        <div class="field"><label class="field-name" for="gm-name">Method name</label> <input type="text" id="gm-name" autocomplete="off" placeholder="no spaces"> <button type="button" class="quiet-button" id="gm-save">Save method</button></div>
+        <p class="panel-msg" id="gm-msg" role="status"></p>
+      </div>
+
+      <div class="tab-panel" role="tabpanel" id="gpanel-run" aria-labelledby="gtab-run" hidden>
+        <table class="gc-sequence">
+          <thead><tr><th scope="col">Sample type</th><th scope="col">File name</th><th scope="col">Instrument method</th><th scope="col">Injection volume</th><th scope="col">Position</th></tr></thead>
+          <tbody><tr><td>Unknown</td><td><input type="text" id="gr-file" autocomplete="off" aria-label="File name" placeholder="no spaces"></td><td id="gr-method">—</td><td>1 µL</td><td>manual</td></tr></tbody>
+        </table>
+        <div class="button-row"><button type="button" class="primary-button" id="gr-run">Run This Sample</button></div>
+        <p class="panel-intro">Run This Sample opens the run with Start When Ready and no autosampler: inject 1 µL by hand at the port, then press Start on the GC.</p>
+        <p class="panel-msg" id="gr-msg" role="status"></p>
+      </div>
+    </div>
 
     <div class="instrument" id="ms-panel">
       <p class="panel-msg" id="gc-status" role="status"></p>
@@ -381,6 +495,7 @@
         <canvas id="tic-canvas" class="chart" width="1200" height="260" aria-label="The chromatogram: the total ion current against time"></canvas>
       </div>
       <p class="spec-readout" id="tic-readout" role="status">&nbsp;</p>
+      <label class="gc-subtract"><input type="checkbox" id="gc-subtract" checked> Background subtract <span class="soft">(take away the column’s bleed and the air and water background)</span></label>
       <div class="spectrum-wrap">
         <canvas id="ms-canvas" class="chart" width="1200" height="380" aria-label="The mass spectrum"></canvas>
       </div>

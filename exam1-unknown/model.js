@@ -155,6 +155,17 @@
     'syringe-empty': 'The syringe is empty: draw up 1 µL from the GC vial first.',
     'take-syringe': 'Pick up the syringe first.',
     'gc-running': 'Wait for this run to finish before you inject again.',
+    'gc-capped': 'The GC vial is capped: take the cap off first.',
+    'gc-full': 'The GC vial already has its dichloromethane.',
+    'gc-no-solvent': 'Add the dichloromethane to the GC vial first: the syringe needs a solution, not the neat unknown.',
+    'gc-vial-empty': 'The GC vial is empty: a drop of your unknown and the dichloromethane go in first.',
+    'gc-not-armed': 'The software is not waiting for a sample yet: set the method, then press Run This Sample (part 6, Run).',
+    'gc-press-start': 'Your sample is already on the column: press Start on the GC.',
+    'gc-inject-first': 'Inject your sample first, then press Start.',
+    'gc-no-vacuum': 'The mass spectrometer is not pumped down yet (part 6, Status): wait for the pumps.',
+    'gc-tuning': 'The EI Check is still running.',
+    'gc-nothing-to-wait-for': 'The pumps have nothing to wait for: the vacuum is good.',
+    'gc-nut-tight': 'The column nut is already tight.',
     'no-unknown': 'The room is still setting up your unknown.'
   };
   function reasonText(code) { return REASONS[code] || 'That cannot be done just now.'; }
@@ -178,9 +189,13 @@
     atr: 'The IR’s crystal, in the middle of the steel plate',
     clamp: 'The clamp: click to lower it onto the crystal, or raise it',
     syringe: 'A 10 µL syringe for the GC',
-    gcvial: 'Your unknown in dichloromethane, for the GC-MS',
+    gcvial: 'The GC vial: click it with nothing in your hand to cap it or take the cap off',
     port: 'The GC’s injection port',
-    gcscreen: 'The GC-MS'
+    gcscreen: 'The GC-MS',
+    gcunknown: 'Your unknown, for the GC vial',
+    dcm: 'Dichloromethane (CH₂Cl₂): click to fill a pipet',
+    gcnut: 'The column nut, where the GC column enters the mass spectrometer',
+    gcstart: 'Start, on the GC’s keypad'
   };
 
   // ---- Checking the readings: plain words for the 3D lab's verdicts -----------------------------
@@ -250,9 +265,11 @@
     info = info || {};
     if (s.held === 'irdrop') return 'Click the crystal in the middle of the IR’s steel plate to put your unknown on it.';
     if (s.held === 'syringe') return 'Click the GC vial to draw up 1 µL.';
-    if (s.held === 'syringefull') return 'Click the injection port on top of the GC to inject: the run starts at once.';
+    if (s.held === 'syringefull') return 'Click the injection port on top of the GC to inject, then press Start on the GC.';
+    if (s.held === 'gcdrop') return 'Click the GC vial to add your unknown to it.';
+    if (s.held === 'dcm') return 'Click the GC vial to fill it with dichloromethane to its shoulder.';
     if (focus === 'ir') return irStep(s, info);
-    if (focus === 'ms') return msStep(info);
+    if (focus === 'ms') return msStep(s, info);
     if (s.held === 'solvent') return 'You have a pipet of CDCl₃. Click the vial to empty it in.';
     if (s.held === 'd2o') return 'You have a drop of D₂O. Click your uncapped tube to add it.';
     if (s.held === 'pipet') return 'Click the vial to draw up the solution.';
@@ -294,11 +311,7 @@
       if (info.solid && !s.clamp) return 'ir-clamp';
       return info.recorded ? null : 'ir-record';
     }
-    if (focus === 'ms') {
-      if (s.held === 'syringe') return 'gc-fill';
-      if (s.held === 'syringefull') return 'gc-inject';
-      return info.running || info.gc ? null : 'gc-fill';
-    }
+    if (focus === 'ms') return gcKey(s, info);
     switch (s.held) {
       case 'solvent': return 'solvent';
       case 'd2o': return 'd2o';
@@ -331,10 +344,46 @@
     return 'Your IR spectrum is in part 5. Wipe the crystal clean when you are done.';
   }
 
-  function msStep(info) {
+  /** The step of the GC-MS's list to do now (info: armed, injected, running, gc = a run is done, checked = the status was looked at). */
+  function gcKey(s, info) {
+    switch (s.held) {
+      case 'gcdrop': return 'gc-drop';
+      case 'dcm': return 'gc-solvent';
+      case 'syringe': return 'gc-fill';
+      case 'syringefull': return 'gc-inject';
+    }
+    if (info.running) return null;
+    if (info.injected) return 'gc-start';
+    if (!(s.gcDrops > 0)) return 'gc-drop';
+    if (!s.gcSolvent) return 'gc-solvent';
+    if (!s.gcCapped) return 'gc-cap';
+    if (!s.gcVacuum || !info.checked) return 'gc-ready';
+    if (s.gcTune !== 'pass') {
+      if (s.gcTune === 'leak' && !s.gcNutTight) return 'gc-nut';
+      if (s.gcTune === 'wet' && !s.gcDry) return 'gc-ready';
+      return 'gc-tune';
+    }
+    if (!info.armed) return info.gc ? null : 'gc-arm';
+    return 'gc-fill';
+  }
+
+  function msStep(s, info) {
+    switch (gcKey(s, info)) {
+      case 'gc-drop': return s.gcDrops > 0 ? 'Click the GC vial to add it.' : 'Put a little of your unknown in the empty GC vial: one drop of a liquid, a few crystals of a solid.';
+      case 'gc-solvent': return 'Fill the GC vial with dichloromethane to its shoulder (about 1 mL).';
+      case 'gc-cap': return 'Cap the GC vial, or the dichloromethane will evaporate.';
+      case 'gc-ready': return !s.gcVacuum ? 'The mass spectrometer is still pumping down. Check its status (part 6) and wait for the pumps.'
+        : (s.gcTune === 'wet' && !s.gcDry ? 'The EI Check found water. Wait for the pumps to pump it away (part 6, Status), then check the tune again.' : 'Check the instrument’s status (part 6, Status).');
+      case 'gc-tune': return s.gcTune === 'leak' || s.gcTune === 'wet' ? 'Run the EI Check again (part 6, Tune).' : 'Check the tune: EI Check (part 6, Tune).';
+      case 'gc-nut': return 'The EI Check found air in the instrument. Tighten the column nut where the transfer line enters the mass spectrometer.';
+      case 'gc-arm': return 'Set the method and save it (part 6, Method), then name the file and press Run This Sample (Run).';
+      case 'gc-fill': return 'Pick up the syringe and draw up 1 µL from the GC vial.';
+      case 'gc-inject': return 'Inject at the port on top of the GC.';
+      case 'gc-start': return 'Press Start on the GC now: the sample is sitting on the column.';
+    }
     if (info.running) return 'The run is under way: watch the chromatogram grow in part 6.';
     if (info.gc) return 'Click the top of your compound’s peak in the chromatogram (part 6) to see its mass spectrum.';
-    return 'Pick up the syringe, draw up 1 µL from the GC vial, and inject it into the port on top of the GC.';
+    return '';
   }
 
   // ---- The IR and the GC-MS --------------------------------------------------------------------------
@@ -370,15 +419,85 @@
     return out;
   }
 
-  /** The GC's oven: 35 °C for 2 min, then 15 °C a minute up to 280 °C. The detector is off for the first 2 min (the solvent delay). */
+  /**
+   * The GC-MS's method (GcMs.cs in the room has the same fields): the oven holds its start for 2 min,
+   * climbs at the ramp to 280 °C and holds 4 min; the filament stays off for the solvent delay.
+   * GC_METHOD is the method as it should be; GC_CHOICES what each field offers.
+   */
+  var GC_METHOD = { inlet: 225, split: 33, start: 50, ramp: 15, scanHigh: 400, scanTime: 0.2, delay: 2 };
+  var GC_FIXED = { hold: 2, end: 280, finalHold: 4, scanLow: 15 };
+  var GC_CHOICES = {
+    inlet: [100, 225, 350], split: [0, 10, 33, 100], start: [35, 50, 80], ramp: [5, 15, 40],
+    scanHigh: [150, 400, 650], scanTime: [0.05, 0.2, 1], delay: [0, 2, 5]
+  };
+  function gcMethod(m) {
+    var out = {};
+    Object.keys(GC_METHOD).forEach(function (k) {
+      var v = m && typeof m[k] === 'number' ? m[k] : GC_METHOD[k];
+      out[k] = GC_CHOICES[k].indexOf(v) >= 0 ? v : GC_METHOD[k];
+    });
+    return out;
+  }
+  function gcMinutes(m) { m = gcMethod(m); return GC_FIXED.hold + (GC_FIXED.end - m.start) / m.ramp + GC_FIXED.finalHold; }
+  function gcOven(m, t) { m = gcMethod(m); return t <= GC_FIXED.hold ? m.start : Math.min(GC_FIXED.end, m.start + (t - GC_FIXED.hold) * m.ramp); }
+  /** The method as the page first shows it: right but for one field, which differs from student to student. */
+  function gcDefaultMethod(code, mass) {
+    var h = 0, s = String(code || '');
+    for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 9973;
+    var wrong = [{ split: 0 }, { delay: 0 }];
+    if (mass >= 140) wrong.push({ scanHigh: 150 });
+    var m = gcMethod(null), w = wrong[h % wrong.length];
+    Object.keys(w).forEach(function (k) { m[k] = w[k]; });
+    return m;
+  }
+  /** The method in one line, for the report. */
+  function gcMethodLine(m) {
+    m = gcMethod(m);
+    return 'inlet ' + m.inlet + ' °C, ' + (m.split ? 'split ' + m.split + ':1' : 'splitless') + '; oven ' + m.start + ' °C for 2 min, '
+      + m.ramp + ' °C/min to 280 °C, held 4 min; scan m/z 15–' + m.scanHigh + ', ' + m.scanTime + ' s a scan; solvent delay ' + m.delay + ' min';
+  }
+  /** A file or method name the instrument's software takes: letters, figures, - _ and ., no spaces. */
+  function gcNameOk(name) { return /^[A-Za-z0-9_.\-]{1,40}$/.test(String(name || '')); }
+  /** The nominal mass of a formula (the most common isotope of each element). */
+  var NOMINAL = { C: 12, H: 1, N: 14, O: 16, S: 32, P: 31, F: 19, Cl: 35, Br: 79, I: 127, Si: 28 };
+  function nominalMass(formula) {
+    var c = parseFormula(formula), sum = 0;
+    Object.keys(c).forEach(function (e) { sum += (NOMINAL[e] || 0) * c[e]; });
+    return sum;
+  }
+  /** The EI Check's report as rows: [what, value, limit, within the limit]. */
+  function tuneRows(r) {
+    var rows = [
+      ['Leak check (air in the analyser, %)', r.leakCheck, '< 10', r.leakCheck < 10],
+      ['Mass error at m/z 69 (u)', r.massError, '± 0.10', Math.abs(r.massError) <= 0.10],
+      ['Water, m/z 18 (% of m/z 69)', r.water / 10, '< 20', r.water / 10 < 20],
+      ['Nitrogen, m/z 28 (% of m/z 69)', r.nitrogen, '< 10', r.nitrogen < 10],
+      ['Oxygen, m/z 32 (% of m/z 69)', r.oxygen, '< 5', r.oxygen < 5],
+      ['Electron multiplier (V)', r.multiplier, '< 2500', r.multiplier < 2500],
+      ['Foreline pressure (mTorr)', r.foreline, '< 100', r.foreline < 100]
+    ];
+    return rows;
+  }
+  /** One line for the report: what the last EI Check found. */
+  function tuneLine(t) {
+    if (t === 'pass') return 'EI Check passed.';
+    if (t === 'leak') return 'EI Check failed: air in the instrument (nitrogen and oxygen high, mass axis off).';
+    if (t === 'wet') return 'EI Check failed: water high.';
+    return 'No EI Check run.';
+  }
+
+  // the old fixed method, kept for runs saved before 2026-10-22
   var GC = { hold: 2, start: 35, rate: 15, end: 280, delay: 2 };
   GC.minutes = GC.hold + (GC.end - GC.start) / GC.rate;
   function ovenAt(minutes) { return minutes <= GC.hold ? GC.start : Math.min(GC.end, GC.start + (minutes - GC.hold) * GC.rate); }
 
-  /** When the chromatogram is highest, after the solvent delay (min), or null with no run. */
-  function ticApex(values, step) {
-    var best = -Infinity, at = -1;
-    for (var i = Math.ceil(GC.delay / step); i < values.length; i++) if (values[i] != null && values[i] > best) { best = values[i]; at = i; }
+  /**
+   * When the chromatogram is highest (min), or null with no run: after the solvent delay, and never
+   * in the first 2 min, where the solvent comes off when the delay is set too short.
+   */
+  function ticApex(values, step, delay) {
+    var best = -Infinity, at = -1, from = Math.max(delay == null ? GC.delay : delay, 2);
+    for (var i = Math.ceil(from / step - 1e-9); i < values.length; i++) if (values[i] != null && values[i] > best) { best = values[i]; at = i; }
     return at < 0 ? null : at * step;
   }
 
@@ -682,7 +801,10 @@
     SOLVENTS: SOLVENTS, EXPERIMENTS: EXPERIMENTS, SCAN_CHOICES: SCAN_CHOICES, REFERENCES: REFERENCES,
     checkText: checkText, SPLITTINGS: SPLITTINGS, SPLITTING_NAMES: SPLITTING_NAMES, CARBON_TYPES: CARBON_TYPES, CARBON_NAMES: CARBON_NAMES, hydrogenSum: hydrogenSum,
     IR_STRENGTHS: IR_STRENGTHS, IR_STRENGTH_NAMES: IR_STRENGTH_NAMES, IR_SHAPES: IR_SHAPES, IR_SHAPE_NAMES: IR_SHAPE_NAMES, pickBands: pickBands,
-    GC: GC, ovenAt: ovenAt, ticApex: ticApex, checkRetention: checkRetention, massLost: massLost,
+    GC: GC, ovenAt: ovenAt, ticApex: ticApex,
+    GC_METHOD: GC_METHOD, GC_CHOICES: GC_CHOICES, gcMethod: gcMethod, gcMinutes: gcMinutes, gcOven: gcOven,
+    gcDefaultMethod: gcDefaultMethod, gcMethodLine: gcMethodLine, gcNameOk: gcNameOk, nominalMass: nominalMass,
+    tuneRows: tuneRows, tuneLine: tuneLine, checkRetention: checkRetention, massLost: massLost,
     sameFormula: sameFormula, subscripts: subscripts
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
