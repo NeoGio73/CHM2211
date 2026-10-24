@@ -149,9 +149,10 @@
     'cap-before-shaking': 'Cap the tube before you shake it.',
     'd2o-in-tube': 'The D₂O goes into the NMR tube, not the vial.',
     'bad-number': 'That is not a number.',
-    'crystal-not-clean': 'Something is already on the crystal. Wipe it clean first: the acetone and a tissue.',
+    'crystal-not-clean': 'Your unknown is already on the crystal. Wipe it clean first (isopropyl alcohol and a tissue) if you want to start again.',
+    'ir-self-test': 'The IR is still testing itself after being switched on: wait until the power light stops flashing (part 5).',
     'clamp-down': 'Raise the clamp first.',
-    'background-needs-clean': 'A background is recorded with nothing on the crystal: wipe it clean first.',
+    'background-needs-clean': 'A background is recorded with nothing of your unknown on the crystal: wipe it clean first.',
     'syringe-empty': 'The syringe is empty: draw up 1 µL from the GC vial first.',
     'take-syringe': 'Pick up the syringe first.',
     'gc-running': 'Wait for this run to finish before you inject again.',
@@ -185,7 +186,7 @@
     ir: 'The IR spectrometer',
     ms: 'The GC-MS',
     irvial: 'Your unknown, pure, for the IR',
-    wipe: 'Acetone and tissues: click to wipe the crystal clean',
+    wipe: 'Isopropyl alcohol and tissues: click to wipe the crystal clean, from the middle outward',
     atr: 'The IR’s crystal, in the middle of the steel plate',
     clamp: 'The clamp: click to lower it onto the crystal, or raise it',
     syringe: 'A 10 µL syringe for the GC',
@@ -220,6 +221,7 @@
     // the IR
     'no-band': 'Your compound has no band here. Read the wavenumber at the bottom of a dip in your own spectrum.',
     'co2': 'That is carbon dioxide in the air (near 2350 cm⁻¹), not your compound. Record a background on the clean crystal, then your sample again, and it goes.',
+    'grease': 'Your compound has no band here: this is where the silicone grease left on an unwiped crystal absorbs (1258, 1074, 1012 and 792 cm⁻¹). Wipe the crystal, record a background, then your sample again.',
     'water-vapour': 'Those sharp little lines are water vapour in the air, not your compound. Record a background on the clean crystal, then your sample again.',
     'strength-wrong': 'Look again at how deep this band is beside your deepest one: strong, medium or weak.',
     'shape-broad': 'Look again at its shape: this band spreads over a wide range of wavenumbers.',
@@ -306,7 +308,7 @@
     info = info || {};
     if (focus === 'ir') {
       if (s.held === 'irdrop') return 'ir-sample';
-      if (!s.background) return s.crystal === 'clean' ? 'ir-background' : 'ir-clean';
+      if (!s.background) return s.crystal === 'clean' && !s.residue ? 'ir-background' : 'ir-clean';
       if (s.crystal === 'clean') return info.recorded ? null : 'ir-sample';
       if (info.solid && !s.clamp) return 'ir-clamp';
       return info.recorded ? null : 'ir-record';
@@ -333,9 +335,9 @@
   }
 
   function irStep(s, info) {
-    if (!s.background) return s.crystal === 'clean'
+    if (!s.background) return s.crystal === 'clean' && !s.residue
       ? 'First record a background, with nothing on the crystal: Record the background.'
-      : 'Wipe the crystal clean (the acetone and a tissue), then record a background.';
+      : 'Wipe the crystal clean (isopropyl alcohol on a tissue, from the middle outward), then record a background.';
     if (s.crystal === 'clean') return info.recorded
       ? 'The crystal is clean. Record another spectrum, or go on to the GC-MS.'
       : 'Put a little of your unknown on the crystal: click its vial, then the crystal.';
@@ -484,6 +486,27 @@
     if (t === 'leak') return 'EI Check failed: air in the instrument (nitrogen and oxygen high, mass axis off).';
     if (t === 'wet') return 'EI Check failed: water high.';
     return 'No EI Check run.';
+  }
+
+  /**
+   * The IR's collection time (s) for a number of scans and a resolution: 16 scans at 4 cm⁻¹ is drawn
+   * as 20 s (Thermo's ATR video puts a background and a sample at 15 to 30 s); time grows with the
+   * scans, and halving the resolution's width doubles it.
+   */
+  function irSeconds(scans, res) { return 20 * (scans / 16) * (4 / res); }
+  /** What the status line says about an IR spectrum (msg as the room sent it). */
+  function irNotes(msg, solid, clamped) {
+    var notes = [];
+    if (!msg.sample) notes.push('There was nothing of your unknown on the crystal, so this is the spectrum of the crystal' + (msg.background ? '.' : ' and the air.'));
+    else if (solid && !clamped) notes.push('Poor crystal contact: the bands are weak because crystals of a solid hardly touch the diamond until the clamp presses them down.');
+    if (msg.grease === 'dirty') notes.push('Bands at 1258, 1074, 1012 and 792 cm⁻¹ are not yours: the crystal was not cleaned, and the last user’s silicone grease is on it. Wipe it, record a background, and record the sample again.');
+    if (msg.grease === 'negative') notes.push('Negative absorbance: the background was collected on a dirty crystal, so the grease that was wiped off since shows upside down. Clean the crystal, record the background again, then the sample.');
+    if (!msg.background) notes.push('No background was recorded, so the carbon dioxide (near 2350 cm⁻¹), the water vapour in the air and the diamond’s own band (2250 to 1900 cm⁻¹) are in the spectrum. Record a background on the clean crystal, then the sample again.');
+    if (msg.scans === 1) notes.push('One scan: the noise is as large as the small bands, worst below 1000 cm⁻¹; 16 scans averages it down fourfold.');
+    else if (msg.scans === 4) notes.push('Four scans: still noisy below 1000 and above 3000 cm⁻¹; more scans average the noise down.');
+    if (msg.res === 16) notes.push('At 16 cm⁻¹ resolution, bands closer than that merge; 4 cm⁻¹ is the usual setting.');
+    else if (msg.res === 8) notes.push('At 8 cm⁻¹ resolution, bands closer than that merge; 4 cm⁻¹ is the usual setting.');
+    return notes;
   }
 
   // the old fixed method, kept for runs saved before 2026-10-22
@@ -804,7 +827,7 @@
     GC: GC, ovenAt: ovenAt, ticApex: ticApex,
     GC_METHOD: GC_METHOD, GC_CHOICES: GC_CHOICES, gcMethod: gcMethod, gcMinutes: gcMinutes, gcOven: gcOven,
     gcDefaultMethod: gcDefaultMethod, gcMethodLine: gcMethodLine, gcNameOk: gcNameOk, nominalMass: nominalMass,
-    tuneRows: tuneRows, tuneLine: tuneLine, checkRetention: checkRetention, massLost: massLost,
+    tuneRows: tuneRows, tuneLine: tuneLine, irSeconds: irSeconds, irNotes: irNotes, checkRetention: checkRetention, massLost: massLost,
     sameFormula: sameFormula, subscripts: subscripts
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

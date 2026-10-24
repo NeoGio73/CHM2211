@@ -61,6 +61,7 @@
       software: false,              // the spectrometer software has been opened: the room's monitor shows its status
       ir: null,                     // the last IR spectrum: { from, step, background, sample, t }
       irView: null, irBands: false, irThreshold: 10,
+      irScans: 16, irRes: 4,        // the IR's collection settings (OMNIC's Collect tab)
       gc: null,                     // the last GC-MS run: { seed, done, run, file, method } (its chromatogram is asked for again after a reload)
       gcMethod: null,               // the method as set in the software's Method tab (first shown with one field wrong)
       gcSaved: null,                // the method as last saved: { name, method }
@@ -212,7 +213,7 @@
     put('magnet', s.place === 'magnet' ? 'In the magnet' : (s.place === 'top' ? 'Floating at the top' : ''), s.place === 'magnet');
     put('d2o', s.d2o ? (s.shaken ? 'D₂O added and shaken' : 'D₂O added, not shaken yet') : '', !!(s.d2o && s.shaken));
     // the IR
-    put('ir-clean', s.crystal === 'sample' ? '' : 'Clean', s.crystal !== 'sample' || !!s.background);
+    put('ir-clean', s.crystal === 'sample' || s.residue ? '' : 'Clean', s.crystal !== 'sample' && !s.residue);
     put('ir-background', s.background ? 'Recorded' : '', !!s.background);
     put('ir-sample', s.crystal === 'sample' ? 'On the crystal' : '', s.crystal === 'sample');
     put('ir-clamp', s.clamp ? 'Down' : 'Up', !!s.clamp);
@@ -1071,13 +1072,12 @@
   var irHover = null, irDrag = null;
 
   function receiveIr(msg) {
-    state.ir = { from: msg.from, step: msg.step, background: !!msg.background, sample: !!msg.sample, clamped: !!(state.sample && state.sample.clamp), t: msg.t };
+    var clamped = !!(state.sample && state.sample.clamp);
+    state.ir = { from: msg.from, step: msg.step, background: !!msg.background, sample: !!msg.sample, clamped: clamped, t: msg.t,
+      grease: msg.grease || '', scans: msg.scans || 16, res: msg.res || 4 };
     state.irView = null;
-    var notes = [];
-    if (!msg.sample) notes.push('There was nothing on the crystal, so this is the spectrum of the empty crystal' + (msg.background ? '.' : ' and the air.'));
-    else if (solid && !(state.sample && state.sample.clamp)) notes.push('The bands are weak: crystals of a solid hardly touch the crystal until the clamp presses them down.');
-    if (!msg.background) notes.push('No background was recorded, so the carbon dioxide (near 2350 cm⁻¹) and the water vapour in the air are in the spectrum. Record a background on the clean crystal, then the sample again.');
-    $('ir-status').textContent = notes.length ? notes.join(' ') : 'Recorded. Read the bands into Table 3.';
+    var notes = M.irNotes(msg, solid, clamped);
+    $('ir-status').textContent = notes.length ? notes.join(' ') : 'Recorded on a clean crystal (' + state.ir.scans + (state.ir.scans === 1 ? ' scan, ' : ' scans, ') + state.ir.res + ' cm⁻¹). Read the bands into Table 3.';
     drawIr();
     scheduleFigures();
     showRoutine();
@@ -1085,7 +1085,64 @@
     saveState();
   }
 
-  function irView() { return state.irView || { from: 4000, to: 600 }; }
+  function irView() { return state.irView || { from: 4000, to: irLow() }; }
+  /** The low end of the spectrum on show: 400 with the diamond crystal, 600 for a spectrum saved before 2026-10-24. */
+  function irLow() { return state.ir ? Math.round(state.ir.from - (state.ir.t.length - 1) * state.ir.step) : 400; }
+
+  // ---- the IR's self-test and its collections ----
+  var irWarmShown = null, irCollecting = false, irTimer = null;
+
+  function receiveIrStatus(msg) {
+    irWarmShown = msg;
+    showIrDiagnostics();
+  }
+
+  function showIrDiagnostics() {
+    var s = state.sample || {};
+    var warm = irWarmShown ? !!irWarmShown.warm : s.irWarm !== false;
+    var light = $('ir-power-light');
+    light.setAttribute('data-state', warm ? 'on' : 'flashing');
+    $('ir-power-text').textContent = warm ? 'Power: on, ready' : 'Power: flashing, the self-test is running';
+    ['power', 'laser', 'source', 'electronics', 'detector'].forEach(function (k) { $('ir-icon-' + k).setAttribute('data-state', warm ? 'ok' : 'testing'); });
+    $('ir-diag-msg').textContent = warm
+      ? 'All five pass. The instrument is left switched on, so it is warm and ready.'
+      : 'The IR was switched on a moment ago and is testing itself: about ' + Math.max(1, Math.round(irWarmShown ? irWarmShown.left : 10)) + ' s left (sped up; on the real instrument about two minutes). Collecting waits until the light stops flashing.';
+    Array.prototype.forEach.call(document.querySelectorAll('[data-collect]'), function (b) { b.disabled = !warm || irCollecting; });
+  }
+
+  function showIrTime() {
+    var sec = M.irSeconds(state.irScans, state.irRes);
+    $('ir-time').textContent = 'Collection time ' + secondsText(sec);
+  }
+
+  function secondsText(sec) { return sec < 1 ? 'under 1 s' : Math.round(sec) + ' s'; }
+
+  /** A collection: the time it takes (sped up five times), then the room records it with the settings. */
+  function collectIr(what, row) {
+    var s = state.sample || {};
+    if (irCollecting) return;
+    if (row) lastPress = { key: row.getAttribute('data-done'), t: Date.now() };
+    if (s.irWarm === false) { note(M.reasonText('ir-self-test'), 'warn'); flagStep('ir-self-test'); return; }
+    var sec = M.irSeconds(state.irScans, state.irRes), wait = Math.max(500, sec * 1000 / 5);
+    irCollecting = true;
+    showIrDiagnostics();
+    $('ir-progress').hidden = false;
+    $('ir-status').textContent = (what === 'background' ? 'Collecting the background' : 'Collecting the sample') + ': ' + state.irScans + (state.irScans === 1 ? ' scan' : ' scans') + ' at ' + state.irRes + ' cm⁻¹, ' + secondsText(sec) + ' (sped up)…';
+    var started = Date.now();
+    clearInterval(irTimer);
+    irTimer = setInterval(function () {
+      var f = Math.min(1, (Date.now() - started) / wait);
+      $('ir-progress-fill').style.width = Math.round(f * 100) + '%';
+      if (f < 1) return;
+      clearInterval(irTimer);
+      irCollecting = false;
+      $('ir-progress').hidden = true;
+      $('ir-progress-fill').style.width = '0%';
+      showIrDiagnostics();
+      sendBench('IrSettings', state.irScans + '|' + state.irRes);
+      sendSteps(['ir ' + what]);
+    }, 60);
+  }
 
   /** Whether the last IR spectrum was of the unknown, pressed down if it is a solid. */
   function irRecorded() { return !!(state.ir && state.ir.sample && (!solid || state.ir.clamped)); }
@@ -1093,11 +1150,11 @@
   function drawIr(c, report) {
     var s = surface(c || $('ir-canvas'), 0.34, 240, report), g = s.g, W = s.W, H = s.H, dpr = s.dpr, ir = state.ir;
     if (!ir) { if (!report) drawIr.map = null; message(g, W, H, 'Record a spectrum: it will appear here.'); return; }
-    var x0 = 50 * dpr, x1 = W - 14 * dpr, y0 = 16 * dpr, y1 = H - 42 * dpr, v = report ? { from: 4000, to: 600 } : irView(), i;
-    var low = 100;
-    for (i = 0; i < ir.t.length; i++) if (ir.t[i] < low) low = ir.t[i];
-    // room under the deepest band for its label
-    var bottom = Math.min(80, Math.floor((low - 0.2 * (100 - low) - 2) / 10) * 10), top = 104;
+    var x0 = 50 * dpr, x1 = W - 14 * dpr, y0 = 16 * dpr, y1 = H - 42 * dpr, v = report ? { from: 4000, to: irLow() } : irView(), i;
+    var low = 100, high = 100;
+    for (i = 0; i < ir.t.length; i++) { if (ir.t[i] < low) low = ir.t[i]; if (ir.t[i] > high) high = ir.t[i]; }
+    // room under the deepest band for its label; above 100 only for bands that came out negative
+    var bottom = Math.min(80, Math.floor((low - 0.2 * (100 - low) - 2) / 10) * 10), top = Math.max(104, Math.ceil((high + 4) / 10) * 10);
     function cmToPx(cm) { return x0 + (v.from - cm) / (v.from - v.to) * (x1 - x0); }
     function pxToCm(px) { return v.from - (px - x0) / (x1 - x0) * (v.from - v.to); }
     function tToPx(t) { return y1 - (t - bottom) / (top - bottom) * (y1 - y0); }
@@ -1105,7 +1162,7 @@
     g.lineWidth = 1;
     g.textAlign = 'right'; g.fillStyle = '#17211e';
     var tStep = 100 - bottom > 60 ? 20 : 10;
-    for (var tt = Math.max(0, Math.ceil(bottom / tStep) * tStep); tt <= 100; tt += tStep) {
+    for (var tt = Math.max(0, Math.ceil(bottom / tStep) * tStep); tt <= top - 4; tt += tStep) {
       var yy = tToPx(tt);
       g.strokeStyle = '#e6ebe9'; g.beginPath(); g.moveTo(x0, yy); g.lineTo(x1, yy); g.stroke();
       g.fillText(String(tt), x0 - 6 * dpr, yy + 4 * dpr);
@@ -1159,6 +1216,15 @@
   }
 
   function bindIr() {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-collect]'), function (b) {
+      b.addEventListener('click', function () { collectIr(b.getAttribute('data-collect'), b.closest('.routine-step')); });
+    });
+    $('ir-scans').value = String(state.irScans);
+    $('ir-res').value = String(state.irRes);
+    $('ir-scans').addEventListener('change', function () { state.irScans = Number($('ir-scans').value); showIrTime(); saveState(); });
+    $('ir-res').addEventListener('change', function () { state.irRes = Number($('ir-res').value); showIrTime(); saveState(); });
+    showIrTime();
+    showIrDiagnostics();
     $('ir-bands').addEventListener('click', function () {
       state.irBands = !state.irBands;
       $('ir-bands').setAttribute('aria-pressed', state.irBands ? 'true' : 'false');
@@ -1175,7 +1241,7 @@
       zoom: function (a, b) {
         if (!drawIr.map) return;
         var ca = drawIr.map.pxToCm(a), cb = drawIr.map.pxToCm(b);
-        state.irView = { from: Math.min(4000, Math.max(ca, cb)), to: Math.max(600, Math.min(ca, cb)) };
+        state.irView = { from: Math.min(4000, Math.max(ca, cb)), to: Math.max(irLow(), Math.min(ca, cb)) };
         drawIr(); saveState();
       },
       full: function () { state.irView = null; drawIr(); saveState(); }
@@ -1947,7 +2013,9 @@
       if (!d) return;
       figure(NMR_CAPTIONS[e.key] + ', ' + d.scans + (d.scans === 1 ? ' scan.' : ' scans.'), function (c) { renderNmr(c, e.key, true); });
     });
-    if (state.ir) figure('IR (ATR), the pure compound' + (state.ir.sample ? '' : ': nothing on the crystal') + (state.ir.background ? '.' : ', with no background recorded.'), function (c) { drawIr(c, true); });
+    if (state.ir) figure('IR (diamond ATR), the pure compound' + (state.ir.sample ? '' : ': nothing on the crystal') + (state.ir.background ? '' : ', with no background recorded')
+      + (state.ir.grease === 'dirty' ? ', on a crystal that was not cleaned (silicone grease in the spectrum)' : (state.ir.grease === 'negative' ? ', with a background taken on a dirty crystal (negative bands)' : (state.ir.scans ? ', taken on a clean crystal' : '')))
+      + '. ' + (state.ir.scans ? state.ir.scans + (state.ir.scans === 1 ? ' scan, ' : ' scans, ') + state.ir.res + ' cm⁻¹.' : ''), function (c) { drawIr(c, true); });
     if (tic) figure('Gas chromatogram (total ion current)' + (state.gc && state.gc.file ? ', file ' + state.gc.file : '') + '. '
       + (runMethod() ? 'Method' + (state.gc.method ? ' ' + state.gc.method : '') + ': ' + M.gcMethodLine(runMethod()) + '. ' : 'Oven 35 °C for 2 min, then 15 °C a minute to 280 °C. ')
       + M.tuneLine(state.gc && state.gc.run ? ({ ok: 'pass', leak: 'leak', wet: 'wet' }[state.gc.run.tune] || '') : '').replace('EI Check', 'At the time of the run, the EI Check')
@@ -2080,6 +2148,8 @@
         showRoutine();
         updateNote();
         consoleStatus();
+        if (msg.state && msg.state.irWarm) { irWarmShown = { warm: true, left: 0 }; }
+        showIrDiagnostics();
         saveState();
         break;
       case 'clicked':
@@ -2147,7 +2217,10 @@
         receiveVerdicts(msg);
         break;
       case 'irbackground':
-        $('ir-status').textContent = 'Background recorded. Now put your unknown on the crystal and record its spectrum.';
+        $('ir-status').textContent = 'Background recorded (' + (msg.scans || 16) + (msg.scans === 1 ? ' scan, ' : ' scans, ') + (msg.res || 4) + ' cm⁻¹). Now put your unknown on the crystal and record its spectrum.';
+        break;
+      case 'irstatus':
+        receiveIrStatus(msg);
         break;
       case 'ir':
         receiveIr(msg);

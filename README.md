@@ -21,7 +21,7 @@ Each student is given an unknown compound, by a five-character code at the top o
 | 2. The formula | Works out the degrees of unsaturation from the molecular formula |
 | 3. The spectrometer | Locks, shims, records ¹H, ¹³C and DEPT-135 spectra, then processes them: Fourier transform, phase, baseline, reference, peak picking and integration |
 | 4. What the spectra show | Reads every ¹H and ¹³C signal into tables, which the page checks |
-| 5. The IR spectrum | Reads the important bands |
+| 5. The IR spectrum | Chooses the scans and resolution, records a background and the spectrum on a diamond ATR (the crystal must first be wiped of the last user's silicone grease; some students find the IR still testing itself), then reads the important bands |
 | 6. The GC-MS | Runs the instrument's software: checks its status, runs the EI Check (some students meet a vented, leaking or wet instrument), sets and saves the method, sets up the run and presses Start on the GC. Then reads the retention time, the molecular ion, the base peak and the main fragments |
 | 7. Your structure | Draws the structure, names it, and explains how each spectrum supports it |
 | 8. Turn in | Prints the report, or saves it as a PDF, with every spectrum recorded |

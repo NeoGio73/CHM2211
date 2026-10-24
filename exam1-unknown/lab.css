@@ -730,7 +730,33 @@ canvas.chart { display: block; width: 100%; height: auto; cursor: crosshair; tou
   .gc-sequence, .gc-sequence tbody, .gc-sequence tr, .gc-sequence td { display: block; width: 100%; box-sizing: border-box; }
 }
 
+/* ---- The IR's self-test, collection settings and posted warnings (part 5) ---- */
+.ir-diagnostics { display: grid; grid-template-columns: auto 1fr; gap: 6px 18px; align-items: center; margin-bottom: 12px; }
+.ir-power { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.ir-power-light { width: 14px; height: 14px; border-radius: 50%; background: #c9cfcd; border: 1px solid #8d9994; }
+.ir-power-light[data-state="on"] { background: #2b6fd6; border-color: #1c4c9a; }
+.ir-power-light[data-state="flashing"] { background: #2b6fd6; border-color: #1c4c9a; animation: ir-flash 0.8s steps(2, start) infinite; }
+@keyframes ir-flash { to { visibility: hidden; } }
+@media (prefers-reduced-motion: reduce) { .ir-power-light[data-state="flashing"] { animation: none; background: #9db8e6; } }
+.ir-icons { display: flex; flex-wrap: wrap; gap: 6px 16px; list-style: none; margin: 0; padding: 0; }
+.ir-icons li { display: inline-flex; align-items: center; gap: 6px; }
+.ir-icon { width: 12px; height: 12px; border-radius: 3px; background: #c9cfcd; }
+.ir-icons li[data-state="ok"] .ir-icon { background: #2f8a4c; }
+.ir-icons li[data-state="testing"] .ir-icon { background: #e0a526; }
+.ir-extras { grid-column: 1 / -1; font-size: 0.86rem; line-height: 2; }
+.ir-extras .quiet-button { font-size: 0.8rem; padding: 2px 8px; }
+#ir-diag-msg { grid-column: 1 / -1; margin: 0; }
+.ir-collect-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.ir-library { font-size: 0.86rem; margin: 2px 0 6px; }
+.ir-progress { height: 6px; background: #e3e8e6; border-radius: 3px; overflow: hidden; margin: 6px 0; }
+.ir-progress-fill { height: 100%; width: 0%; background: var(--enamel); }
+.ir-posted { margin-top: 10px; padding: 8px 12px; border-left: 4px solid #e0a526; background: #fdf8ec; font-size: 0.9rem; }
+.ir-posted-title { margin: 0 0 4px; font-weight: 700; }
+.ir-posted ul { margin: 0; padding-left: 1.2em; }
+@media (max-width: 560px) { .ir-diagnostics { grid-template-columns: 1fr; } }
+
 @media print {
+  .ir-diagnostics, .ir-posted, .ir-library, .ir-progress { display: none !important; }
   .gc-software { display: none !important; }
   @page { margin: 12mm 13mm; }
   body { font-size: 10pt; }

@@ -125,13 +125,13 @@
 
         <ol class="routine" id="routine-ir" role="tabpanel" aria-labelledby="rtab-ir" hidden>
           <li class="routine-step" data-done="ir-clean">
-            <span class="routine-name">A clean crystal</span>
-            <span class="routine-buttons"><button type="button" class="quiet-button" data-steps="ir clean">Wipe it with acetone</button></span>
+            <span class="routine-name">A clean crystal <span class="soft">(isopropyl alcohol on a tissue, from the middle outward, then a dry tissue)</span></span>
+            <span class="routine-buttons"><button type="button" class="quiet-button" data-steps="ir clean">Wipe it with isopropyl alcohol</button></span>
             <span class="routine-state" id="state-ir-clean"></span>
           </li>
           <li class="routine-step" data-done="ir-background">
             <span class="routine-name">A background, with nothing on the crystal</span>
-            <span class="routine-buttons"><button type="button" class="quiet-button" data-steps="ir background">Record the background</button></span>
+            <span class="routine-buttons"><button type="button" class="quiet-button" data-collect="background">Record the background</button></span>
             <span class="routine-state" id="state-ir-background"></span>
           </li>
           <li class="routine-step" data-done="ir-sample">
@@ -140,13 +140,13 @@
             <span class="routine-state" id="state-ir-sample"></span>
           </li>
           <li class="routine-step" data-done="ir-clamp">
-            <span class="routine-name">Clamp it down <span class="soft">(for a solid)</span></span>
+            <span class="routine-name">Clamp it down <span class="soft">(a solid only: a drop of liquid needs no clamp)</span></span>
             <span class="routine-buttons"><button type="button" class="quiet-button toggle" id="clamp-button" data-steps="ir clamp" aria-pressed="false">Clamp</button></span>
             <span class="routine-state" id="state-ir-clamp"></span>
           </li>
           <li class="routine-step" data-done="ir-record">
             <span class="routine-name">Record the spectrum <span class="soft">(it appears in part 5)</span></span>
-            <span class="routine-buttons"><button type="button" class="quiet-button" data-steps="ir record">Record</button></span>
+            <span class="routine-buttons"><button type="button" class="quiet-button" data-collect="record">Record</button></span>
             <span class="routine-state" id="state-ir-record"></span>
           </li>
         </ol>
@@ -372,13 +372,37 @@
 
   <section class="part" id="part-ir" aria-labelledby="ir-title">
     <h2 id="ir-title"><span class="step" aria-hidden="true">5</span>The IR spectrum</h2>
-    <p class="lede">This is the IR's software. Record a background with the crystal clean and nothing on it, then put your unknown on the crystal (part 1, the IR tab) and record its spectrum. Each dip is a band, where bonds in your compound absorb the infrared light. Read the bands that tell you which bonds are there.</p>
+    <p class="lede">This is the IR's software. Wipe the diamond crystal clean, record a background with nothing on it, then put your unknown on the crystal (part 1, the IR tab) and record its spectrum. Each dip is a band, where bonds in your compound absorb the infrared light. Read the bands that tell you which bonds are there.</p>
+
+    <div class="instrument ir-diagnostics" id="ir-diagnostics">
+      <div class="ir-power"><span class="ir-power-light" id="ir-power-light" data-state="" aria-hidden="true"></span> <span id="ir-power-text">Power</span></div>
+      <ul class="ir-icons" aria-label="The instrument's self-test">
+        <li data-state="" id="ir-icon-power"><span class="ir-icon" aria-hidden="true"></span>Power</li>
+        <li data-state="" id="ir-icon-laser"><span class="ir-icon" aria-hidden="true"></span>Laser</li>
+        <li data-state="" id="ir-icon-source"><span class="ir-icon" aria-hidden="true"></span>Source</li>
+        <li data-state="" id="ir-icon-electronics"><span class="ir-icon" aria-hidden="true"></span>Electronics</li>
+        <li data-state="" id="ir-icon-detector"><span class="ir-icon" aria-hidden="true"></span>Detector</li>
+      </ul>
+      <div class="ir-extras">
+        <button type="button" class="quiet-button" disabled>Align</button> <span class="soft">Not needed today: it is part of the monthly performance test.</span><br>
+        <button type="button" class="quiet-button" disabled>Laser Verification</button> <span class="soft">Not needed today: in a stable room the laser is checked every three months.</span>
+      </div>
+      <p class="panel-msg" id="ir-diag-msg" role="status"></p>
+    </div>
 
     <div class="instrument" id="ir-panel">
-      <div class="panel-row">
-        <button type="button" class="quiet-button" data-steps="ir background">Record the background</button>
-        <button type="button" class="primary-button" data-steps="ir record">Record the spectrum</button>
+      <div class="panel-row ir-collect-row">
+        <label class="small-field">Scans <select id="ir-scans"><option value="1">1</option><option value="4">4</option><option value="16" selected>16</option><option value="64">64</option></select></label>
+        <label class="small-field">Resolution <select id="ir-res"><option value="2">2 cm⁻¹</option><option value="4" selected>4 cm⁻¹</option><option value="8">8 cm⁻¹</option><option value="16">16 cm⁻¹</option></select></label>
+        <span class="soft" id="ir-time"></span>
       </div>
+      <div class="panel-row">
+        <button type="button" class="quiet-button" data-collect="background">Record the background</button>
+        <button type="button" class="primary-button" data-collect="record">Record the spectrum</button>
+        <button type="button" class="quiet-button" disabled title="Left out on purpose">Search a library</button>
+      </div>
+      <p class="soft ir-library">A library search would name your compound for you, so it is left out: read the bands yourself.</p>
+      <div class="ir-progress" id="ir-progress" hidden><div class="ir-progress-fill" id="ir-progress-fill"></div></div>
       <p class="panel-msg" id="ir-status" role="status"></p>
       <div class="toolbar">
         <div class="tool-group">
@@ -394,6 +418,14 @@
       </div>
       <p class="spec-readout" id="ir-readout" role="status">&nbsp;</p>
       <p class="panel-intro">Drag across the spectrum to zoom in; double-click for the whole spectrum.</p>
+      <div class="ir-posted">
+        <p class="ir-posted-title">Posted beside the instrument</p>
+        <ul>
+          <li>Never let a liquid touch the windows of the sample compartment.</li>
+          <li>Keep dichloromethane and other chlorinated solvents away from the IR: their vapour in the hot source turns into hydrogen chloride and phosgene. Run the IR on the pure compound, never on the GC solution.</li>
+          <li>The instrument stays switched on. Switching it off and on every day makes it less stable.</li>
+        </ul>
+      </div>
     </div>
 
     <div class="table-block">
