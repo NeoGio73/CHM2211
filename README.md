@@ -9,6 +9,7 @@ Virtual labs for a college-level Organic Chemistry II course. Everything runs in
 | Topic | Lab | Type |
 | --- | --- | --- |
 | Structure from spectra (NMR, IR, mass spectrometry) | [Exam 1 Unknown](https://neogio73.github.io/CHM2211/exam1-unknown/) | Virtual lab |
+| Grignard synthesis of triphenylmethanol | [Grignard Prelab](https://neogio73.github.io/CHM2211/grignard-prelab/) | Prelab (preview, being built) |
 
 ## Exam 1 Unknown
 
@@ -32,3 +33,16 @@ A [guide to running the NMR](https://neogio73.github.io/CHM2211/exam1-unknown/gu
 A [prelab review](https://neogio73.github.io/CHM2211/exam1-unknown/prelab/), also linked from the lab page, covers degrees of unsaturation, why each step at the NMR matters, and how to read ¹H, ¹³C with DEPT-135, IR and mass spectra (with an isotope-pattern simulator that shows what +1 and +2 elements do to M⁺, from the natural abundances), with two practice compounds worked from formula to structure and questions to check yourself. Its practice compounds are not among the unknowns.
 
 The spectra are drawn from published data: the NIST Chemistry WebBook, nmrshiftdb2, the Human Metabolome Database, SDBS (National Institute of Advanced Industrial Science and Technology, Japan) as held by those two databases, and the chemical literature.
+
+## Grignard Prelab (preview, being built)
+
+A prelab in which students rehearse the microscale Grignard synthesis of triphenylmethanol before doing it at the bench. It is a preview of work in progress and is not yet assigned. What it has so far:
+
+| Stage | What the student does |
+| --- | --- |
+| Drying the glassware | Looks closely at each piece of glassware, and dries any that still shows water: a rinse of acetone from the wash bottle, or the drying oven at 110 °C, on a bench clock |
+| Assembling the apparatus | Builds the handout's apparatus from microscale glassware (a Kimble Microflex kit): the 20-mL round-bottom flask just above the stirring hot plate, a Claisen head clamped at its neck, a septum with the syringe through it on the straight arm, the CaCl₂ drying tube on the side arm, and no condenser. Glass threads are joined by blue couplers, screwed on by the student. Pieces that do not belong are refused, with the reason |
+
+As at the bench, the page does not say whether a choice was right: what the student did is recorded, and its consequences are to show later in the run.
+
+The fume hood is the model "Dm3-004-08" by foxart3d, used under CC BY 4.0.

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grignard Prelab: The Apparatus</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231c4c9a'/%3E%3Ccircle cx='16' cy='21' r='7' fill='none' stroke='%23fff' stroke-width='2.5'/%3E%3Crect x='14' y='4' width='4' height='11' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="lab.css">
+</head>
+<body>
+<main class="sheet">
+
+  <header class="masthead">
+    <p class="course">CHM 2211 &middot; Organic Chemistry II</p>
+    <h1>Grignard Prelab: The Apparatus</h1>
+    <p class="lede">The synthesis of triphenylmethanol starts with dry glassware put together the right way. Practice assembling it here before you do it at the bench.</p>
+  </header>
+
+  <section class="part" aria-labelledby="task-title">
+    <h2 id="task-title"><span class="step" aria-hidden="true">2</span>Dry and assemble the glassware</h2>
+    <p>A Grignard reagent is destroyed by water. Your glassware was washed, rinsed with acetone and left to dry for two days. Look at each piece before you use it, and dry anything that still shows water.</p>
+    <ul class="how">
+      <li>Click a piece (without dragging it) to look at it closely. From there you can rinse it with acetone from the wash bottle, or put it in the drying oven beside the hood, set at 110&nbsp;&deg;C.</li>
+      <li>Drying takes time on the bench clock. &ldquo;Speed up the wait&rdquo; runs the clock faster.</li>
+    </ul>
+    <p>Then build the apparatus in your handout&rsquo;s figure, <em>Apparatus for Experiment 35</em>, from the glassware on the bench. Some pieces on the bench do not belong in it.</p>
+    <ul class="how">
+      <li>Drag a piece and let go when its joint is close to the joint it should go on. A gold outline shows a piece it will join.</li>
+      <li>As in the kit, two glass threads do not screw into each other: they are joined by a blue coupler, screwed onto one of them first.</li>
+      <li>A piece that does not belong there is not joined, and a note below the bench says why.</li>
+      <li>Let go of a piece away from any joint and it goes back to its place. Lift a piece off to take it apart: whatever is screwed onto it comes with it.</li>
+    </ul>
+
+    <div class="stage" id="stage">
+      <canvas id="unity-canvas" tabindex="-1" aria-label="3D fume hood with a ring stand, a clamp, a stirring hot plate, and microscale glassware to assemble"></canvas>
+      <div class="stage-cover" id="stage-cover">
+        <p id="stage-status">Setting up the fume hood</p>
+        <div class="progress" aria-hidden="true"><div class="progress-fill" id="progress-fill"></div></div>
+      </div>
+    </div>
+
+    <div class="stop" id="stop" role="alert" hidden>
+      <p id="stop-text"></p>
+      <button type="button" class="quiet-button" id="stop-ok">I understand</button>
+    </div>
+
+    <div class="stage-bar">
+      <p class="note" id="note" role="status" aria-live="polite">Click a piece to look at it, or drag it to build.</p>
+      <p class="count" id="count" aria-live="polite"></p>
+    </div>
+
+    <div class="clock-bar">
+      <p class="clock">Bench clock <span id="clock">0:00</span></p>
+      <button type="button" class="quiet-button" id="fast" aria-pressed="false">Speed up the wait</button>
+    </div>
+
+    <div class="look" id="look" hidden>
+      <p class="look-title">Looking at the <span id="look-name"></span><span class="look-note" id="look-note"></span></p>
+      <div class="look-actions">
+        <button type="button" class="quiet-button" id="rinse">Rinse with acetone</button>
+        <button type="button" class="quiet-button" id="to-oven">Put in the drying oven (110&nbsp;&deg;C)</button>
+        <button type="button" class="quiet-button" id="take-out">Take out with tongs</button>
+        <button type="button" class="quiet-button" id="look-back">Back to the bench</button>
+      </div>
+    </div>
+
+    <div class="oven-list" id="oven-list" hidden>
+      <p>In the drying oven:</p>
+      <ul id="oven-items"></ul>
+    </div>
+
+    <div class="controls">
+      <div class="views" role="group" aria-label="Camera view">
+        <button type="button" class="view-button" data-view="bench" aria-pressed="true">Bench</button>
+        <button type="button" class="view-button" data-view="apparatus" aria-pressed="false">Apparatus, close</button>
+        <button type="button" class="view-button" data-view="oven" aria-pressed="false">Drying oven</button>
+        <button type="button" class="view-button" data-view="hood" aria-pressed="false">Fume hood</button>
+      </div>
+      <div class="actions">
+        <button type="button" class="quiet-button" id="missing">What&rsquo;s missing?</button>
+        <button type="button" class="quiet-button" id="start-over">Start over</button>
+      </div>
+    </div>
+    <p class="hints" id="hints" role="status" hidden></p>
+
+    <div class="debug" id="debug" hidden>
+      <h3>Hidden state (shown only with ?debug=1)</h3>
+      <table><thead><tr><th>Piece</th><th>Water</th><th>Acetone</th><th>&deg;C</th><th>Dry</th><th>In oven</th></tr></thead><tbody id="debug-rows"></tbody></table>
+      <ol id="debug-log"></ol>
+    </div>
+  </section>
+
+  <footer class="credits">
+    <p>This page is a simulation. The glassware follows the Kimble Microflex microscale kit; the 20-mL round-bottom flask is the handout&rsquo;s.</p>
+    <p>Fume hood model: <a href="https://sketchfab.com/3d-models/dm3-004-08-a640c09386df411e8669ddb19e3fd40f" target="_blank" rel="noopener">&ldquo;Dm3-004-08&rdquo;</a> by foxart3d,
+    used under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.
+    Shown here with the sash raised, a rear baffle added and different materials.</p>
+  </footer>
+</main>
+
+<script src="app.js"></script>
+<script>
+  (function () {
+    var lab = window.GrignardLab;
+    if (lab.isMock) return;
+
+    var canvas = document.querySelector("#unity-canvas");
+    var buildUrl = "Build";
+    var loaderUrl = buildUrl + "/GrignardLab.loader.js";
+    var config = {
+      arguments: [],
+      dataUrl: buildUrl + "/GrignardLab.data.unityweb",
+      frameworkUrl: buildUrl + "/GrignardLab.framework.js.unityweb",
+      codeUrl: buildUrl + "/GrignardLab.wasm.unityweb",
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "DefaultCompany",
+      productName: "Grignard Prelab",
+      productVersion: "0.1.0",
+      showBanner: function (message, type) { lab.unityBanner(message, type); }
+    };
+
+    var script = document.createElement("script");
+    script.src = loaderUrl;
+    script.onload = function () {
+      createUnityInstance(canvas, config, function (progress) { lab.unityProgress(progress); })
+        .then(function (instance) { lab.attachUnity(instance); })
+        .catch(function (error) { lab.unityFailed(error); });
+    };
+    script.onerror = function () { lab.unityFailed("The lab files did not load."); };
+    document.body.appendChild(script);
+  })();
+</script>
+</body>
+</html>
