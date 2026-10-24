@@ -112,6 +112,26 @@ button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .hints { margin: 12px 0 0; padding: 10px 12px; border-left: 4px solid var(--accent); background: var(--accent-soft); border-radius: 0 6px 6px 0; }
 .hints[hidden] { display: none; }
 
+.name-tag {
+  position: absolute; z-index: 2; pointer-events: none;
+  padding: 3px 9px; border-radius: 5px;
+  background: rgba(20, 22, 26, 0.88); color: #f2f3f5;
+  font-size: 0.9rem; white-space: nowrap;
+}
+.name-tag[hidden] { display: none; }
+
+.ref { margin-top: 16px; border: 1px solid var(--rule); border-radius: 8px; padding: 8px 12px; }
+.ref summary { cursor: pointer; font-weight: 600; padding: 4px 0; }
+.ref-lede { margin: 6px 0 10px; color: var(--muted); }
+.ref-grid {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+.ref-grid li { border: 1px solid var(--rule); border-radius: 6px; padding: 8px; background: var(--paper); }
+.ref-grid img { display: block; width: 100%; height: auto; aspect-ratio: 1; border-radius: 4px; background: var(--stage); }
+.ref-grid h3 { margin: 8px 0 4px; font-size: 1rem; }
+.ref-grid p { margin: 0; font-size: 0.92rem; }
+
 .stop {
   margin-top: 10px; padding: 10px 14px; border-radius: 6px;
   background: var(--refused-bg); color: var(--refused-ink); border: 2px solid var(--refused-ink);

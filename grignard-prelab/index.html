@@ -20,6 +20,7 @@
     <h2 id="task-title"><span class="step" aria-hidden="true">2</span>Dry and assemble the glassware</h2>
     <p>A Grignard reagent is destroyed by water. Your glassware was washed, rinsed with acetone and left to dry for two days. Look at each piece before you use it, and dry anything that still shows water.</p>
     <ul class="how">
+      <li>Point at anything on the bench to see its name. The glassware and equipment are pictured and described under the bench, in &ldquo;What is on the bench&rdquo;.</li>
       <li>Click a piece (without dragging it) to look at it closely. From there you can rinse it with acetone from the wash bottle, or put it in the drying oven beside the hood, set at 110&nbsp;&deg;C.</li>
       <li>Drying takes time on the bench clock. &ldquo;Speed up the wait&rdquo; runs the clock faster.</li>
     </ul>
@@ -33,6 +34,7 @@
 
     <div class="stage" id="stage">
       <canvas id="unity-canvas" tabindex="-1" aria-label="3D fume hood with a ring stand, a clamp, a stirring hot plate, and microscale glassware to assemble"></canvas>
+      <div class="name-tag" id="name-tag" aria-hidden="true" hidden></div>
       <div class="stage-cover" id="stage-cover">
         <p id="stage-status">Setting up the fume hood</p>
         <div class="progress" aria-hidden="true"><div class="progress-fill" id="progress-fill"></div></div>
@@ -82,6 +84,29 @@
       </div>
     </div>
     <p class="hints" id="hints" role="status" hidden></p>
+
+    <details class="ref">
+      <summary>What is on the bench</summary>
+      <p class="ref-lede">The glassware is from a microscale kit. Its glass ends are threaded, so pieces are screwed together rather than pushed into ground-glass joints.</p>
+      <ul class="ref-grid">
+        <li><img src="glassware/rbf20.png" alt="" width="180" height="180"><h3>20-mL round-bottom flask</h3><p>A flask with a round bottom, which heats evenly. It cannot stand on its own, so it sits in a cork ring on the bench. This one holds a stir bar: a small magnet coated in PTFE (Teflon), which a stirring hot plate spins from below.</p></li>
+        <li><img src="glassware/claisen.png" alt="" width="180" height="180"><h3>Claisen head</h3><p>An adapter with one threaded end below and two arms above, so that two things can be attached over a single flask.</p></li>
+        <li><img src="glassware/coupler.png" alt="" width="180" height="180"><h3>Blue coupler</h3><p>A double screw cap of nylon with an O-ring inside. It joins two threaded glass ends end to end and seals the joint.</p></li>
+        <li><img src="glassware/septum.png" alt="" width="180" height="180"><h3>Rubber septum</h3><p>A rubber disc in a screw cap with an open top. A needle can pass through the rubber, which closes again when the needle is pulled out, so a liquid can be added without opening the apparatus to the air.</p></li>
+        <li><img src="glassware/syringe.png" alt="" width="180" height="180"><h3>Syringe</h3><p>A 1-mL plastic syringe, new from its packet, with a long needle, for adding a liquid in measured portions through a septum.</p></li>
+        <li><img src="glassware/drying-tube.png" alt="" width="180" height="180"><h3>Drying tube, packed</h3><p>A short glass tube filled with a drying agent, anhydrous calcium chloride (CaCl&#8322;), held between two plugs of cotton. Air can pass through it, but the moisture in that air is held back by the drying agent.</p></li>
+        <li><img src="glassware/drying-tube-empty.png" alt="" width="180" height="180"><h3>Drying tube, empty</h3><p>The same tube before it is packed.</p></li>
+        <li><img src="glassware/conical-vial.png" alt="" width="180" height="180"><h3>5-mL conical vial</h3><p>A small vial with a screw cap whose inside narrows to a point, so that small amounts of liquid collect at the bottom and can be drawn up.</p></li>
+        <li><img src="glassware/erlenmeyer.png" alt="" width="180" height="180"><h3>25-mL Erlenmeyer flask</h3><p>A cone-shaped flask with a screw cap, for keeping a solvent closed between uses.</p></li>
+        <li><img src="glassware/rbf50.png" alt="" width="180" height="180"><h3>50-mL round-bottom flask</h3><p>A larger round-bottom flask, with a wider neck.</p></li>
+        <li><img src="glassware/condenser.png" alt="" width="180" height="180"><h3>West condenser</h3><p>A tube inside a water jacket. Cold water flows through the jacket, so vapor rising inside the tube condenses and runs back down.</p></li>
+        <li><img src="glassware/cork-ring.png" alt="" width="180" height="180"><h3>Cork ring</h3><p>Holds a round-bottom flask upright on the bench.</p></li>
+        <li><img src="glassware/hot-plate.png" alt="" width="180" height="180"><h3>Stirring hot plate</h3><p>Heats from below with no flame, and spins a stir bar inside a flask through a magnet under its ceramic top.</p></li>
+        <li><img src="glassware/ring-stand.png" alt="" width="180" height="180"><h3>Ring stand and clamp</h3><p>A heavy base and a rod. The clamp on the rod holds glassware at a fixed height.</p></li>
+        <li><img src="glassware/wash-bottle.png" alt="" width="180" height="180"><h3>Wash bottle of acetone</h3><p>A squeeze bottle for rinsing glassware with acetone, a solvent that mixes with water and evaporates quickly. Acetone is flammable, so it is kept in the hood.</p></li>
+        <li><img src="glassware/oven.png" alt="" width="180" height="180"><h3>Drying oven</h3><p>An oven for drying glassware, set at 110&nbsp;&deg;C. It stands on the bench beside the hood: an oven&rsquo;s heating elements could ignite solvent vapor.</p></li>
+      </ul>
+    </details>
 
     <div class="debug" id="debug" hidden>
       <h3>Hidden state (shown only with ?debug=1)</h3>

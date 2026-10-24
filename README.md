@@ -45,4 +45,6 @@ A prelab in which students rehearse the microscale Grignard synthesis of triphen
 
 As at the bench, the page does not say whether a choice was right: what the student did is recorded, and its consequences are to show later in the run.
 
+Pointing at anything on the bench shows its name, and a section under the bench pictures and describes each piece of glassware and equipment, without saying where it goes.
+
 The fume hood is the model "Dm3-004-08" by foxart3d, used under CC BY 4.0.

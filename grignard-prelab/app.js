@@ -85,6 +85,10 @@
         lab.points = e;
         while (waiting.length) waiting.shift()(e);
         break;
+      case "name":
+        tagName = e.name;
+        placeTag();
+        break;
       case "inspect":
         showLook(e);
         break;
@@ -215,9 +219,30 @@
     b.addEventListener("click", function () { send("SetView", b.getAttribute("data-view")); });
   });
 
+  // ---- the name of what the pointer is over: a tag beside the pointer ----
+
+  var tag = document.getElementById("name-tag");
+  var tagName = null, overCanvas = false;
+
+  function placeTag() {
+    if (!tagName || !overCanvas || !lab.pointer) { tag.hidden = true; return; }
+    var r = canvas.getBoundingClientRect();
+    tag.textContent = sentence(tagName);
+    tag.hidden = false;
+    // beside the pointer, kept inside the stage
+    var x = lab.pointer[0] - r.left + 14, y = lab.pointer[1] - r.top + 16;
+    x = Math.min(x, r.width - tag.offsetWidth - 6);
+    y = Math.min(y, r.height - tag.offsetHeight - 6);
+    tag.style.left = Math.max(6, x) + "px";
+    tag.style.top = Math.max(6, y) + "px";
+  }
+
+  canvas.addEventListener("pointerenter", function () { overCanvas = true; });
+  canvas.addEventListener("pointerleave", function () { overCanvas = false; placeTag(); });
+
   // ---- for tests that drag with the real mouse ----
 
-  canvas.addEventListener("pointermove", function (e) { lab.pointer = [e.clientX, e.clientY]; });
+  canvas.addEventListener("pointermove", function (e) { lab.pointer = [e.clientX, e.clientY]; overCanvas = true; placeTag(); });
 
   /** Asks the bench where everything is; resolves with the answer. */
   lab.where = function () {
