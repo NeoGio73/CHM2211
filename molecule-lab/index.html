@@ -150,7 +150,7 @@ body { background: var(--bg); color: var(--fg); overflow: hidden; font-family: v
     <div class="credit" id="credit"></div>
   </div>
   <div class="callout" id="callout">
-    <div class="chips"><span id="chipCourse">Molecule Lab</span><span id="chipTopic" hidden></span><span id="chipStyle">Ball &amp; stick</span></div>
+    <div class="chips"><span id="chipCourse">Molecule Lab</span><span id="chipTopic" hidden></span><span id="chipStyle">Wireframe</span></div>
     <h1 id="name">Water</h1>
     <div class="formula" id="formula"></div>
     <div class="mass" id="mass"></div>
@@ -166,9 +166,9 @@ body { background: var(--bg); color: var(--fg); overflow: hidden; font-family: v
   <div class="legend" id="legend"></div>
   <div class="controls">
     <div class="row" role="group" aria-label="Model style">
-      <button type="button" data-style="ball" aria-pressed="true">Ball &amp; stick</button>
+      <button type="button" data-style="ball" aria-pressed="false">Ball &amp; stick</button>
       <button type="button" data-style="space" aria-pressed="false">Space-filling</button>
-      <button type="button" data-style="wire" aria-pressed="false">Wireframe</button>
+      <button type="button" data-style="wire" aria-pressed="true">Wireframe</button>
       <button type="button" id="lp" aria-pressed="true">Lone pairs</button>
     </div>
     <div class="row">
@@ -305,7 +305,7 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x05070b);
 scene.fog = new THREE.FogExp2(0x05070b, 0.035);
 const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 200);
-camera.position.set(0, 0.2, 11.5);
+camera.position.set(0, 0.3, 14.5);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true; controls.enablePan = false;
@@ -612,7 +612,7 @@ function elColor(el) { return ELEMENT_COLORS[el] || ELEMENT_COLORS.default; }
 /* van der Waals radii (Å, Bondi) for the space-filling model */
 const VDW = { H: 1.20, C: 1.70, N: 1.55, O: 1.52, F: 1.47, P: 1.80, S: 1.80, Cl: 1.75, Br: 1.85, I: 1.98, default: 1.80 };
 const LP_COLOR = "#c9b8ff";            // lone-pair clouds (soft lilac)
-let STYLE = "ball";                    // "ball" | "space" | "wire"
+let STYLE = "wire";                    // "ball" | "space" | "wire"
 let SHOW_LP = true;
 const STYLE_NAMES = { ball: "ball-and-stick", space: "space-filling", wire: "wireframe" };
 function atomRadius(el) {
