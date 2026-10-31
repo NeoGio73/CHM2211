@@ -1,0 +1,1055 @@
+<title>CHM 2211 Molecule Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: full-bleed WebGL stage; thin HUD overlay (nav top-left, callout right, legend bottom). Single dark look by choice. */
+:root {
+  color-scheme: dark;
+  --bg: #05070b;
+  --fg: #dfe6ee;
+  --muted: #7f8b99;
+  --line: rgba(200, 215, 230, 0.35);
+  --panel: rgba(8, 12, 18, 0.55);
+  --display: "Chakra Petch", "Rajdhani", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); overflow: hidden; font-family: var(--mono); }
+#stage { position: fixed; inset: 0; }
+#stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+
+.hud { position: fixed; inset: 0; pointer-events: none;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-bottom, 0px)); }
+.nav { position: absolute; top: max(18px, env(safe-area-inset-top, 0px)); left: max(18px, env(safe-area-inset-left, 0px));
+  font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); line-height: 1.7; }
+.nav b { color: var(--fg); font-weight: 500; }
+.nav .list { margin-top: 10px; display: grid; gap: 1px; }
+.nav .list span { cursor: pointer; pointer-events: auto; transition: color .2s; }
+.nav .list span:hover { color: var(--fg); }
+.nav .list span.on { color: var(--fg); }
+.nav .list span.on::before { content: "→ "; }
+
+.callout { position: absolute; top: 22%; right: max(6%, env(safe-area-inset-right, 0px)); text-align: left; min-width: 0; max-width: 46vw; }
+.callout .meta { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+.callout h1 { font-family: var(--display); font-weight: 300; font-size: clamp(28px, 4.4vw, 54px); line-height: 1; margin: 6px 0 8px; letter-spacing: 0.01em; text-wrap: balance; }
+.callout .formula { font-size: 14px; color: var(--fg); font-variant-numeric: tabular-nums; }
+.callout .formula sub { font-size: 0.72em; }
+.callout .mass { font-size: 11px; color: var(--muted); margin-top: 4px; font-variant-numeric: tabular-nums; }
+#leader { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+
+.legend { position: absolute; left: max(18px, env(safe-area-inset-left, 0px)); bottom: max(18px, env(safe-area-inset-bottom, 0px));
+  display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 11px; letter-spacing: 0.08em; color: var(--muted); max-width: calc(100% - 140px); }
+.legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; box-shadow: 0 0 8px currentColor; }
+
+.controls { position: absolute; right: max(18px, env(safe-area-inset-right, 0px)); bottom: max(14px, env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; align-items: flex-end; gap: 6px; pointer-events: auto; }
+.controls .row { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+.controls button[aria-pressed="true"] { background: rgba(223, 230, 238, 0.16); border-color: var(--fg); }
+.controls button:disabled { opacity: 0.35; cursor: not-allowed; }
+.tip { position: fixed; left: 0; top: 0; z-index: 5; pointer-events: none; max-width: 260px;
+  background: rgba(8, 12, 18, 0.86); border: 1px solid var(--line); padding: 8px 11px; backdrop-filter: blur(6px);
+  font: 400 11px/1.5 var(--mono); color: var(--fg); letter-spacing: 0.04em; }
+.tip b { font: 500 17px var(--display); margin-right: 6px; letter-spacing: 0.02em; }
+.tip i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; box-shadow: 0 0 6px rgba(255,255,255,0.25); }
+.tip span { display: block; color: var(--muted); font-variant-numeric: tabular-nums; }
+.controls button { font: 500 11px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg);
+  background: var(--panel); border: 1px solid var(--line); padding: 8px 11px; cursor: pointer; backdrop-filter: blur(4px); }
+.controls button:hover { border-color: var(--fg); }
+.controls button:focus-visible { outline: 1px solid var(--fg); outline-offset: 2px; }
+.hint { position: absolute; left: 50%; bottom: max(56px, calc(env(safe-area-inset-bottom, 0px) + 48px)); transform: translateX(-50%);
+  font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); white-space: nowrap; opacity: .8; }
+
+/* hold-to-enter gate */
+.gate { position: fixed; inset: 0; z-index: 30; background: #020305; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+  cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: none; transition: opacity 1.3s ease, visibility 1.3s; }
+.gate.open { opacity: 0; visibility: hidden; pointer-events: none; }
+.gate-hex { width: 136px; height: 136px; overflow: visible; }
+.gate-hex circle { fill: #9fb0c4; animation: twinkle 2.4s ease-in-out infinite; }
+.gate-hex .track { fill: none; stroke: rgba(200, 215, 230, 0.14); stroke-width: 1; }
+.gate-hex .ring { fill: none; stroke: #e8eef5; stroke-width: 1.6; stroke-dasharray: 100; stroke-dashoffset: 100; filter: drop-shadow(0 0 4px rgba(200,220,255,0.7)); }
+@keyframes twinkle { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+.gate-text { font: 500 11px var(--mono); letter-spacing: 0.28em; color: var(--muted); min-height: 1.2em; }
+.gate-btn { font: 500 12px var(--display); letter-spacing: 0.22em; text-transform: uppercase; color: var(--fg); background: none; border: 0; padding: 10px 14px;
+  opacity: 0; transition: opacity 0.8s; cursor: pointer; }
+.gate.ready .gate-btn { opacity: 1; }
+.gate-btn:focus-visible { outline: 1px solid var(--fg); outline-offset: 4px; }
+
+/* viewfinder frame */
+.frame { position: absolute; inset: max(8px, env(safe-area-inset-top, 0px)) max(8px, env(safe-area-inset-right, 0px)) max(8px, env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px));
+  border: 1px solid rgba(200, 215, 230, 0.1); }
+.frame i { position: absolute; width: 5px; height: 5px; background: rgba(223, 230, 238, 0.85); }
+.frame i:nth-child(1) { left: -3px; top: -3px; } .frame i:nth-child(2) { right: -3px; top: -3px; }
+.frame i:nth-child(3) { left: -3px; bottom: -3px; } .frame i:nth-child(4) { right: -3px; bottom: -3px; }
+
+/* top-right readout */
+.readout { position: absolute; top: max(20px, env(safe-area-inset-top, 0px)); right: max(22px, env(safe-area-inset-right, 0px)); text-align: right;
+  font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); line-height: 1.8; font-variant-numeric: tabular-nums; }
+.readout #clock { color: var(--fg); }
+
+/* tag chips */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+.chips span { font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg); border: 1px solid var(--line); padding: 2px 6px; background: rgba(8, 12, 18, 0.35); }
+.callout .meta { margin-top: 8px; }
+.callout .formula sup { font-size: 0.72em; }
+.callout h1.long { font-size: clamp(24px, 3.3vw, 42px); }
+.chips #chipTopic { border-color: var(--fg); background: rgba(223, 230, 238, 0.12); }
+.credit { margin-top: 14px; max-width: 220px; font-size: 9px; letter-spacing: 0.08em; text-transform: none; line-height: 1.5; color: var(--muted); opacity: 0.8; }
+.credit a { color: inherit; pointer-events: auto; }
+
+/* vertical progress rail + side arrows */
+.rail { position: absolute; right: max(18px, env(safe-area-inset-right, 0px)); top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 6px; pointer-events: auto; }
+.rail button { width: 12px; height: 16px; padding: 0 5px; border: 0; background: none; cursor: pointer; }
+.rail button::before { content: ""; display: block; width: 2px; height: 100%; background: rgba(200, 215, 230, 0.28); transition: background .3s; }
+.rail button.on { height: 34px; }
+.rail button.on::before { background: var(--fg); box-shadow: 0 0 8px rgba(223, 230, 238, 0.6); }
+.rail button:hover::before { background: rgba(223, 230, 238, 0.7); }
+.rail button:focus-visible { outline: 1px solid var(--fg); }
+.arrow { position: absolute; top: 50%; transform: translateY(-50%); pointer-events: auto; background: none; border: 0; color: var(--muted);
+  font: 300 22px var(--display); padding: 10px; cursor: pointer; transition: color .2s; }
+.arrow:hover { color: var(--fg); }
+.arrow:focus-visible { outline: 1px solid var(--fg); }
+.arrow.left { left: calc(50% - min(34vw, 380px)); } .arrow.right { left: calc(50% + min(34vw, 380px) - 40px); }
+
+@media (prefers-reduced-motion: reduce) { .gate-hex circle { animation: none; opacity: 0.7; } }
+
+@media (max-width: 640px) {
+  .arrow { display: none; }
+  .readout { font-size: 9px; }
+  .callout { top: auto; bottom: 190px; right: auto; left: max(18px, env(safe-area-inset-left, 0px)); max-width: none; }
+  .nav .list { display: none; }
+  .hint { display: none; }
+  .legend { bottom: max(120px, calc(env(safe-area-inset-bottom, 0px) + 116px)); max-width: none; right: 18px; }
+  #leader { display: none; }
+}
+</style>
+
+<div class="gate" id="gate">
+  <svg class="gate-hex" viewBox="-64 -64 128 128" aria-hidden="true">
+    <g id="hexDots"></g>
+    <polygon class="track" id="hexTrack"></polygon>
+    <polygon class="ring" id="hexRing" pathLength="100"></polygon>
+  </svg>
+  <div class="gate-text" id="gateText">LOADING</div>
+  <button class="gate-btn" id="gateBtn" type="button" aria-label="Press and hold to enter the molecule lab">Hold to enter the lab</button>
+</div>
+<div id="stage"></div>
+<svg id="leader" aria-hidden="true"><polyline id="leaderLine" fill="none" stroke="rgba(200,215,230,0.45)" stroke-width="1"/><circle id="leaderDot" r="2.5" fill="#dfe6ee"/></svg>
+<div class="hud">
+  <div class="nav">
+    <div><b>[ Index ]</b> &nbsp;functional groups</div>
+    <div id="counter">01 / 09</div>
+    <div class="list" id="list"></div>
+    <div class="credit" id="credit"></div>
+  </div>
+  <div class="callout" id="callout">
+    <div class="chips"><span id="chipCourse">Molecule Lab</span><span id="chipTopic" hidden></span><span id="chipStyle">Ball &amp; stick</span></div>
+    <h1 id="name">Water</h1>
+    <div class="formula" id="formula"></div>
+    <div class="mass" id="mass"></div>
+    <div class="mass" id="ending" hidden></div>
+    <div class="meta" id="meta"></div>
+  </div>
+  <div class="frame" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+  <div class="readout" aria-hidden="true"><div id="xy">X 0.500 · Y 0.500</div><div id="clock">--:--:-- Daytona Beach</div></div>
+  <div class="rail" id="rail"></div>
+  <button class="arrow left" id="arrowPrev" type="button" aria-label="Previous molecule">«</button>
+  <button class="arrow right" id="arrowNext" type="button" aria-label="Next molecule">»</button>
+  <div class="hint">Point at an atom or bond for details · swipe fast to scatter · drag to orbit</div>
+  <div class="legend" id="legend"></div>
+  <div class="controls">
+    <div class="row" role="group" aria-label="Model style">
+      <button type="button" data-style="ball" aria-pressed="true">Ball &amp; stick</button>
+      <button type="button" data-style="space" aria-pressed="false">Space-filling</button>
+      <button type="button" data-style="wire" aria-pressed="false">Wireframe</button>
+      <button type="button" id="lp" aria-pressed="true">Lone pairs</button>
+    </div>
+    <div class="row">
+      <button id="prev" type="button" aria-label="Previous molecule">‹ Prev</button>
+      <button id="auto" type="button" aria-pressed="true">Auto</button>
+      <button id="next" type="button" aria-label="Next molecule">Next ›</button>
+    </div>
+  </div>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+/* Hold-to-enter gate: dotted benzene ring + decoding loader text. The 3D scene calls labGate.ready(fn) when it has loaded. */
+(() => {
+  const gate = document.getElementById("gate"), text = document.getElementById("gateText"), btn = document.getElementById("gateBtn");
+  const ring = document.getElementById("hexRing"), track = document.getElementById("hexTrack"), dots = document.getElementById("hexDots");
+  const NS = "http://www.w3.org/2000/svg";
+  const hex = r => Array.from({ length: 6 }, (_, k) => { const a = Math.PI / 180 * (60 * k - 90); return [r * Math.cos(a), r * Math.sin(a)]; });
+  const outer = hex(54).map(p => p.join(",")).join(" ");
+  track.setAttribute("points", outer); ring.setAttribute("points", outer);
+  const addDot = (x, y, r) => { const c = document.createElementNS(NS, "circle"); c.setAttribute("cx", x.toFixed(2)); c.setAttribute("cy", y.toFixed(2)); c.setAttribute("r", r);
+    c.style.animationDelay = (Math.random() * 2.4).toFixed(2) + "s"; dots.appendChild(c); };
+  const v = hex(40);
+  for (let k = 0; k < 6; k++) { const [x0, y0] = v[k], [x1, y1] = v[(k + 1) % 6]; for (let s = 0; s < 8; s++) addDot(x0 + (x1 - x0) * s / 8, y0 + (y1 - y0) * s / 8, 1.3); }
+  for (let s = 0; s < 30; s++) { const a = s / 30 * Math.PI * 2; addDot(Math.cos(a) * 24, Math.sin(a) * 24, 0.9); }   // aromatic ring
+  const CH = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%<>/+=";
+  const rnd = () => CH[(Math.random() * CH.length) | 0];
+  let ready = false, onEnter = null, t0 = performance.now();
+  (function loader(now) {             // LOADING keeps decoding in a loop until the scene is ready
+    if (ready) return;
+    const word = "LOADING", p = ((now - t0) % 1500) / 1100;
+    text.textContent = [...word].map((c, i) => i < p * word.length ? c : rnd()).join("");
+    requestAnimationFrame(loader);
+  })(t0);
+  function decodeTo(word) {
+    const s = performance.now();
+    (function step(now) { const p = Math.min(1, (now - s) / 700);
+      text.textContent = [...word].map((c, i) => c === " " || i < p * word.length ? c : rnd()).join("");
+      if (p < 1) requestAnimationFrame(step); })(s);
+  }
+  // hold logic
+  let holding = false, prog = 0, last = performance.now(), done = false;
+  const down = e => { if (!ready || done) return; holding = true; if (e && e.preventDefault) e.preventDefault(); };
+  const up = () => { holding = false; };
+  gate.addEventListener("pointerdown", down);
+  addEventListener("pointerup", up); addEventListener("pointercancel", up); gate.addEventListener("pointerleave", up);
+  btn.addEventListener("keydown", e => { if ((e.key === " " || e.key === "Enter") && !e.repeat) { e.preventDefault(); down(); } });
+  btn.addEventListener("keyup", e => { if (e.key === " " || e.key === "Enter") up(); });
+  btn.addEventListener("click", e => e.preventDefault());
+  (function tick(now) {
+    const dt = Math.min(1, (now - last) / 1000); last = now;
+    prog = Math.max(0, Math.min(1, prog + (holding ? dt / 1.1 : -dt / 0.4)));
+    ring.style.strokeDashoffset = (100 - prog * 100).toFixed(2);
+    if (prog >= 1 && !done) {
+      done = true; gate.classList.add("open");
+      if (onEnter) onEnter();
+      setTimeout(() => { gate.hidden = true; }, 1400);
+      return;
+    }
+    requestAnimationFrame(tick);
+  })(last);
+  window.labGate = { ready(fn) { ready = true; onEnter = fn; decodeTo("SYSTEMS READY"); gate.classList.add("ready"); try { btn.focus({ preventScroll: true }); } catch (e) {} } };
+})();
+</script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+
+/* ===== ELEMENT COLOR SCHEME (Prof. Picione's scheme) ===== */
+const GROUP_COLORS = {
+  alkali:        "#9b4fe0",  // violet
+  alkalineEarth: "#1f8a3a",  // dark green
+  transition:    "#f2a98c",  // beige / peach / salmon
+  noble:         "#22e6f0",  // cyan
+  unknown:       "#ff4fb0"   // pink
+};
+const ELEMENT_COLORS = {
+  H:  "#f4f6f8",   // white
+  C:  "#5b616c",   // dark gray (pure black would vanish on the dark stage)
+  N:  "#2a46e8",   // blue
+  O:  "#ff2418",   // red
+  S:  "#ffd21f",   // yellow
+  P:  "#ff8a00",   // orange
+  F:  "#5fe05a",   // green (halogen)
+  Cl: "#2fdc2f",   // green (halogen)
+  Br: "#a3262a",   // dark red
+  I:  "#8a1fb0",   // dark violet
+  B:  "#f2c4a4",   // boron: beige/peach
+  Fe: "#c4521f",   // dark orange / reddish-brown
+  default: GROUP_COLORS.unknown
+};
+for (const e of ["Li","Na","K","Rb","Cs","Fr"]) ELEMENT_COLORS[e] = GROUP_COLORS.alkali;
+for (const e of ["Be","Mg","Ca","Sr","Ba","Ra"]) ELEMENT_COLORS[e] = GROUP_COLORS.alkalineEarth;
+for (const e of ["He","Ne","Ar","Kr","Xe","Rn"]) ELEMENT_COLORS[e] = GROUP_COLORS.noble;
+for (const e of ["Sc","Ti","V","Cr","Mn","Co","Ni","Cu","Zn","Y","Zr","Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd",
+                 "Hf","Ta","W","Re","Os","Ir","Pt","Au","Hg"]) ELEMENT_COLORS[e] ??= GROUP_COLORS.transition;
+const ELEMENT_NAMES = { H: "Hydrogen", C: "Carbon", N: "Nitrogen", O: "Oxygen", S: "Sulfur", P: "Phosphorus",
+  F: "Fluorine", Cl: "Chlorine", Br: "Bromine", I: "Iodine", B: "Boron", Fe: "Iron", Na: "Sodium", K: "Potassium",
+  Li: "Lithium", Mg: "Magnesium", Ca: "Calcium", Zn: "Zinc", Cu: "Copper", Mn: "Manganese", Co: "Cobalt", Ni: "Nickel" };
+/* Display radii (Å) for the ball part of ball-and-stick */
+const RADII = { H: 0.27, C: 0.42, N: 0.40, O: 0.40, S: 0.52, P: 0.50, F: 0.38, Cl: 0.50, Br: 0.56, I: 0.62, default: 0.50 };
+
+const MOLECULES = [{"lp":[],"topic":"Alkene","ending":"-ene","name":"Ethene","formula":"C2H4","mass":28.05,"atoms":[["C",-0.667,-0.04,-0.005],["C",0.667,0.04,0.005],["H",-1.281,0.844,0.137],["H",-1.17,-0.99,-0.154],["H",1.281,-0.844,-0.137],["H",1.17,0.99,0.154]],"bonds":[[0,1,2.0],[0,2,1.0],[0,3,1.0],[1,4,1.0],[1,5,1.0]]},{"lp":[],"topic":"Alkyne","ending":"-yne","name":"Ethyne","formula":"C2H2","mass":26.04,"atoms":[["C",-0.561,0.08,-0.197],["C",0.561,-0.08,0.197],["H",-1.558,0.223,-0.546],["H",1.558,-0.223,0.546]],"bonds":[[0,1,3.0],[0,2,1.0],[1,3,1.0]]},{"lp":[],"topic":"Arene","ending":"None","name":"Benzene","formula":"C6H6","mass":78.11,"atoms":[["C",-0.797,1.144,0.033],["C",-1.389,-0.116,-0.058],["C",-0.591,-1.26,-0.091],["C",0.797,-1.144,-0.033],["C",1.389,0.116,0.058],["C",0.591,1.26,0.091],["H",-1.419,2.035,0.059],["H",-2.471,-0.206,-0.103],["H",-1.052,-2.242,-0.162],["H",1.419,-2.035,-0.059],["H",2.471,0.206,0.103],["H",1.052,2.242,0.162]],"bonds":[[0,1,1.0],[1,2,2.0],[2,3,1.0],[3,4,2.0],[4,5,1.0],[5,0,2.0],[0,6,1.0],[1,7,1.0],[2,8,1.0],[3,9,1.0],[4,10,1.0],[5,11,1.0]]},{"lp":[[1,0.382,-0.551,-0.742],[1,0.329,-0.348,0.878],[1,0.286,0.952,-0.11]],"topic":"Halide","ending":"None","name":"Chloromethane","formula":"CH3Cl","mass":50.49,"atoms":[["C",-0.139,-0.007,-0.004],["Cl",1.625,0.087,0.042],["H",-0.441,-0.649,-0.834],["H",-0.499,-0.426,0.939],["H",-0.547,0.996,-0.143]],"bonds":[[0,1,1.0],[0,2,1.0],[0,3,1.0],[0,4,1.0]]},{"lp":[[1,0.097,0.093,-0.991],[1,0.135,-0.956,0.26]],"topic":"Alcohol","ending":"-ol","name":"Methanol","formula":"CH4O","mass":32.04,"atoms":[["C",-0.371,-0.002,0.009],["O",0.913,-0.439,-0.396],["H",-0.468,-0.108,1.093],["H",-1.128,-0.617,-0.483],["H",-0.509,1.043,-0.279],["H",1.563,0.124,0.057]],"bonds":[[0,1,1.0],[0,2,1.0],[0,3,1.0],[0,4,1.0],[1,5,1.0]]},{"lp":[[1,-0.006,-0.598,-0.801],[1,-0.044,0.954,-0.295]],"topic":"Ether","ending":"ether","name":"Dimethyl ether","formula":"C2H6O","mass":46.07,"atoms":[["C",1.172,0.055,-0.079],["O",-0.036,0.26,-0.799],["C",-1.175,-0.029,0.0],["H",1.258,-0.99,0.235],["H",1.216,0.716,0.792],["H",2.011,0.291,-0.74],["H",-1.165,-1.076,0.318],["H",-2.072,0.145,-0.601],["H",-1.207,0.629,0.874]],"bonds":[[0,1,1.0],[1,2,1.0],[0,3,1.0],[0,4,1.0],[0,5,1.0],[2,6,1.0],[2,7,1.0],[2,8,1.0]]},{"lp":[[1,-0.177,0.795,0.58],[1,0.309,0.306,-0.9],[3,-0.566,-0.069,-0.821],[3,0.693,-0.695,0.189],[4,-0.287,0.877,-0.384],[4,0.768,-0.361,-0.53],[4,0.282,0.128,0.951],[5,-0.924,0.37,0.095],[5,0.583,0.367,0.725],[5,-0.031,-0.997,0.07]],"topic":"Monophosphate","ending":"phosphate","name":"Methyl phosphate","formula":"CH3O4P-2","mass":110.0,"atoms":[["C",-1.188,0.122,-0.43],["O",0.023,0.82,-0.263],["P",1.233,-0.054,0.423],["O",1.427,-1.217,-0.541],["O",2.393,0.928,0.479],["O",0.666,-0.45,1.779],["H",-1.587,-0.203,0.534],["H",-1.054,-0.74,-1.089],["H",-1.915,0.795,-0.891]],"bonds":[[0,1,1.0],[1,2,1.0],[2,3,2.0],[2,4,1.0],[2,5,1.0],[0,6,1.0],[0,7,1.0],[0,8,1.0]]},{"lp":[[1,-0.899,0.222,-0.378],[1,0.514,-0.546,-0.661],[3,-0.816,-0.379,0.437],[3,0.344,0.897,0.277],[4,-0.475,-0.579,-0.663],[4,0.948,0.132,-0.29],[4,-0.458,0.887,0.056],[5,0.306,0.8,0.515],[5,0.454,-0.017,-0.891],[7,0.26,0.896,-0.361],[7,0.682,-0.572,0.455],[8,-0.501,0.232,-0.834],[8,-0.48,-0.731,0.485],[8,0.921,-0.307,-0.239],[9,-0.752,0.653,0.087],[9,0.662,0.154,0.733],[9,-0.358,-0.932,0.064]],"topic":"Diphosphate","ending":"diphosphate","name":"Methyl diphosphate","formula":"CH3O7P2-3","mass":188.98,"atoms":[["C",-1.423,-0.871,0.175],["O",-1.217,-0.073,-0.968],["P",-0.412,1.328,-0.757],["O",-1.132,2.118,0.331],["O",-0.39,2.001,-2.13],["O",1.073,0.898,-0.35],["P",1.835,-0.295,0.424],["O",3.277,0.201,0.569],["O",1.743,-1.527,-0.475],["O",1.15,-0.485,1.775],["H",-0.743,-1.725,0.164],["H",-2.444,-1.261,0.137],["H",-1.317,-0.309,1.106]],"bonds":[[0,1,1.0],[1,2,1.0],[2,3,2.0],[2,4,1.0],[2,5,1.0],[5,6,1.0],[6,7,2.0],[6,8,1.0],[6,9,1.0],[0,10,1.0],[0,11,1.0],[0,12,1.0]]},{"lp":[[1,0.161,0.134,-0.978]],"topic":"Amine","ending":"-amine","name":"Methylamine","formula":"CH5N","mass":31.06,"atoms":[["C",-0.565,0.1,-0.039],["N",0.85,-0.091,-0.303],["H",-1.156,-0.618,-0.613],["H",-0.87,1.109,-0.329],["H",-0.779,-0.04,1.025],["H",1.129,-1.023,-0.001],["H",1.392,0.563,0.26]],"bonds":[[0,1,1.0],[0,2,1.0],[0,3,1.0],[0,4,1.0],[1,5,1.0],[1,6,1.0]]},{"lp":[[3,0.832,0.555,0.015]],"topic":"Imine (Schiff base)","ending":"None","name":"Acetone imine","formula":"C3H7N","mass":57.1,"atoms":[["C",1.369,-0.351,-0.155],["C",0.081,0.396,0.05],["C",-1.204,-0.387,0.037],["N",0.101,1.676,0.232],["H",1.346,-0.85,-1.128],["H",1.481,-1.102,0.631],["H",2.221,0.333,-0.123],["H",-2.065,0.266,0.197],["H",-1.31,-0.888,-0.929],["H",-1.175,-1.14,0.83],["H",-0.846,2.048,0.358]],"bonds":[[0,1,1.0],[1,2,1.0],[1,3,2.0],[0,4,1.0],[0,5,1.0],[0,6,1.0],[2,7,1.0],[2,8,1.0],[2,9,1.0],[3,10,1.0]]},{"lp":[[2,1.0,-0.008,0.017]],"topic":"Nitrile","ending":"-nitrile","name":"Ethanenitrile","formula":"C2H3N","mass":41.05,"atoms":[["C",-0.486,0.004,-0.008],["C",0.975,-0.008,0.016],["N",2.135,-0.016,0.035],["H",-0.87,-0.759,-0.692],["H",-0.893,-0.197,0.987],["H",-0.862,0.977,-0.339]],"bonds":[[0,1,1.0],[1,2,3.0],[0,3,1.0],[0,4,1.0],[0,5,1.0]]},{"lp":[[1,0.175,0.634,0.754],[1,0.142,0.47,-0.871]],"topic":"Thiol","ending":"-thiol","name":"Methanethiol","formula":"CH4S","mass":48.11,"atoms":[["C",-0.494,0.009,0.009],["S",1.13,0.787,-0.102],["H",-0.587,-0.523,0.959],["H",-1.275,0.771,-0.052],["H",-0.622,-0.701,-0.812],["H",1.848,-0.342,-0.002]],"bonds":[[0,1,1.0],[0,2,1.0],[0,3,1.0],[0,4,1.0],[1,5,1.0]]},{"lp":[[1,0.297,-0.435,-0.85],[1,-0.269,0.945,-0.184]],"topic":"Sulfide","ending":"sulfide","name":"Dimethyl sulfide","formula":"C2H6S","mass":62.14,"atoms":[["C",1.286,0.424,0.214],["S",0.029,0.534,-1.081],["C",-1.285,-0.401,-0.262],["H",1.545,-0.62,0.406],["H",2.187,0.951,-0.112],["H",0.925,0.89,1.135],["H",-0.954,-1.422,-0.056],["H",-2.159,-0.443,-0.917],["H",-1.574,0.088,0.672]],"bonds":[[0,1,1.0],[1,2,1.0],[0,3,1.0],[0,4,1.0],[0,5,1.0],[2,6,1.0],[2,7,1.0],[2,8,1.0]]},{"lp":[[1,-0.471,-0.695,-0.544],[1,0.494,0.621,-0.608],[2,-0.433,0.755,-0.493],[2,0.456,0.353,0.817]],"topic":"Disulfide","ending":"disulfide","name":"Dimethyl disulfide","formula":"C2H6S2","mass":94.2,"atoms":[["C",1.81,-0.325,-0.144],["S",0.7,0.431,-1.357],["S",-0.616,1.455,-0.151],["C",-1.817,0.168,0.27],["H",2.306,0.444,0.454],["H",2.578,-0.896,-0.673],["H",1.262,-1.009,0.508],["H",-2.297,-0.221,-0.633],["H",-2.591,0.6,0.91],["H",-1.336,-0.647,0.817]],"bonds":[[0,1,1.0],[1,2,1.0],[2,3,1.0],[0,4,1.0],[0,5,1.0],[0,6,1.0],[3,7,1.0],[3,8,1.0],[3,9,1.0]]},{"lp":[[1,0.039,-0.908,-0.417],[3,-0.77,0.584,0.255],[3,0.807,0.262,0.53],[3,-0.228,-0.955,0.19]],"topic":"Sulfoxide","ending":"sulfoxide","name":"Dimethyl sulfoxide","formula":"C2H6OS","mass":78.14,"atoms":[["C",-1.274,0.172,-0.448],["S",-0.087,-1.022,0.212],["C",1.359,0.053,0.058],["O",-0.406,-1.203,1.829],["H",-2.273,-0.268,-0.403],["H",-1.025,0.398,-1.487],["H",-1.255,1.087,0.15],["H",1.2,0.976,0.621],["H",2.228,-0.473,0.462],["H",1.533,0.281,-0.996]],"bonds":[[0,1,1.0],[1,2,1.0],[1,3,1.0],[0,4,1.0],[0,5,1.0],[0,6,1.0],[2,7,1.0],[2,8,1.0],[2,9,1.0]]},{"lp":[[2,-0.308,-0.842,-0.443],[2,0.952,0.091,0.293]],"topic":"Aldehyde","ending":"-al","name":"Ethanal","formula":"C2H4O","mass":44.05,"atoms":[["C",-0.626,-0.021,-0.176],["C",0.814,0.033,0.231],["O",1.603,-0.887,0.047],["H",-0.828,0.786,-0.884],["H",-1.253,0.102,0.71],["H",-0.847,-0.982,-0.647],["H",1.137,0.968,0.719]],"bonds":[[0,1,1.0],[1,2,2.0],[0,3,1.0],[0,4,1.0],[0,5,1.0],[1,6,1.0]]},{"lp":[[3,-0.893,-0.074,0.443],[3,0.829,0.075,0.555]],"topic":"Ketone","ending":"-one","name":"Propanone","formula":"C3H6O","mass":58.08,"atoms":[["C",-1.263,-0.11,-0.25],["C",-0.04,0.001,0.62],["C",1.285,0.11,-0.085],["O",-0.12,0.002,1.847],["H",-1.192,-1.008,-0.869],["H",-1.345,0.778,-0.881],["H",-2.156,-0.183,0.376],["H",2.089,0.184,0.651],["H",1.448,-0.78,-0.698],["H",1.294,1.006,-0.71]],"bonds":[[0,1,1.0],[1,2,1.0],[1,3,2.0],[0,4,1.0],[0,5,1.0],[0,6,1.0],[2,7,1.0],[2,8,1.0],[2,9,1.0]]},{"lp":[[2,-0.597,0.785,-0.166],[2,0.985,0.136,0.11],[3,-0.056,-0.646,-0.761],[3,-0.26,-0.461,0.848]],"topic":"Carboxylic acid","ending":"-oic acid","name":"Ethanoic acid","formula":"C2H4O2","mass":60.05,"atoms":[["C",-0.954,-0.074,-0.113],["C",0.486,0.295,0.028],["O",0.958,1.416,-0.041],["O",1.271,-0.775,0.251],["H",-1.307,-0.545,0.808],["H",-1.543,0.83,-0.292],["H",-1.082,-0.748,-0.963],["H",2.173,-0.398,0.322]],"bonds":[[0,1,1.0],[1,2,2.0],[1,3,1.0],[0,4,1.0],[0,5,1.0],[0,6,1.0],[3,7,1.0]]},{"lp":[[1,-0.262,0.868,0.421],[1,-0.048,-0.73,0.682],[4,0.949,0.077,-0.305],[4,-0.723,-0.204,-0.66]],"topic":"Ester","ending":"-oate","name":"Methyl ethanoate","formula":"C3H6O2","mass":74.08,"atoms":[["C",1.821,0.267,0.148],["O",0.469,0.16,0.597],["C",-0.421,-0.12,-0.394],["C",-1.805,-0.213,0.171],["O",-0.144,-0.276,-1.575],["H",1.921,1.084,-0.574],["H",2.448,0.492,1.015],["H",2.157,-0.679,-0.286],["H",-2.51,-0.439,-0.634],["H",-2.086,0.742,0.623],["H",-1.851,-1.017,0.909]],"bonds":[[0,1,1.0],[1,2,1.0],[2,3,1.0],[2,4,2.0],[0,5,1.0],[0,6,1.0],[0,7,1.0],[3,8,1.0],[3,9,1.0],[3,10,1.0]]},{"lp":[[1,0.344,-0.019,0.939],[1,0.187,-0.877,-0.442],[4,0.644,0.614,-0.455],[4,-0.979,0.202,-0.015]],"topic":"Thioester","ending":"-thioate","name":"Methyl ethanethioate","formula":"C3H6OS","mass":90.15,"atoms":[["C",1.75,0.903,-0.76],["S",1.072,-0.483,0.179],["C",-0.637,-0.064,0.112],["C",-1.535,-1.038,0.819],["O",-1.047,0.936,-0.463],["H",1.348,0.913,-1.777],["H",1.519,1.851,-0.267],["H",2.836,0.799,-0.819],["H",-2.573,-0.703,0.729],["H",-1.28,-1.086,1.882],["H",-1.452,-2.029,0.365]],"bonds":[[0,1,1.0],[1,2,1.0],[2,3,1.0],[2,4,2.0],[0,5,1.0],[0,6,1.0],[0,7,1.0],[3,8,1.0],[3,9,1.0],[3,10,1.0]]},{"lp":[[2,-0.149,0.988,0.048],[3,-0.851,-0.153,0.502],[3,0.85,0.169,0.498]],"topic":"Amide","ending":"-amide","name":"Ethanamide","formula":"C2H5NO","mass":59.07,"atoms":[["C",-1.066,-0.179,-0.239],["C",0.167,0.068,0.582],["N",1.311,0.275,-0.126],["O",0.166,0.087,1.807],["H",-1.436,-1.187,-0.034],["H",-0.862,-0.09,-1.309],["H",-1.828,0.557,0.031],["H",2.167,0.379,0.405],["H",1.382,0.091,-1.117]],"bonds":[[0,1,1.0],[1,2,1.0],[1,3,2.0],[0,4,1.0],[0,5,1.0],[0,6,1.0],[2,7,1.0],[2,8,1.0]]},{"lp":[[2,-0.446,-0.854,0.267],[2,0.426,0.419,0.802],[2,0.7,-0.19,-0.689],[3,-0.753,0.549,-0.363],[3,0.927,0.373,0.018]],"topic":"Acid chloride","ending":"-oyl chloride","name":"Ethanoyl chloride","formula":"C2H3ClO","mass":78.5,"atoms":[["C",-0.644,-0.204,-0.035],["C",0.736,0.396,-0.027],["Cl",1.918,-0.692,0.635],["O",0.95,1.529,-0.45],["H",-0.955,-0.438,0.986],["H",-0.655,-1.107,-0.651],["H",-1.351,0.515,-0.459]],"bonds":[[0,1,1.0],[1,2,1.0],[1,3,2.0],[0,4,1.0],[0,5,1.0],[0,6,1.0]]},{"lp":[[2,-0.906,0.111,-0.409],[2,0.798,-0.149,-0.584],[3,-0.131,-0.774,0.62],[3,0.106,0.84,0.533],[6,-0.772,0.079,-0.63],[6,0.922,-0.154,-0.356]],"topic":"Carboxylic acid anhydride","ending":"-oic anhydride","name":"Ethanoic anhydride","formula":"C4H6O3","mass":102.09,"atoms":[["C",-2.292,0.354,0.331],["C",-1.137,0.134,-0.603],["O",-1.268,0.088,-1.816],["O",-0.003,0.008,0.133],["C",1.161,-0.199,-0.536],["C",2.275,-0.309,0.466],["O",1.344,-0.291,-1.739],["H",-2.137,1.272,0.904],["H",-3.214,0.458,-0.249],["H",-2.397,-0.504,0.999],["H",3.22,-0.476,-0.059],["H",2.093,-1.156,1.132],["H",2.354,0.62,1.036]],"bonds":[[0,1,1.0],[1,2,2.0],[1,3,1.0],[3,4,1.0],[4,5,1.0],[4,6,2.0],[0,7,1.0],[0,8,1.0],[0,9,1.0],[5,10,1.0],[5,11,1.0],[5,12,1.0]]}];
+/* Background: "table" = periodic table wall, "stage" = spotlit lab stage */
+const BACKDROP = "lab";   // "table", "stage" or "lab" (stage + table on the wall)
+const IS_STAGE = BACKDROP === "stage" || BACKDROP === "lab";
+const HAS_TABLE = BACKDROP === "table" || BACKDROP === "lab";
+// On the lit stage, carbon can be truly black-ish: it reads as a dark silhouette against the wall
+if (IS_STAGE) ELEMENT_COLORS.C = "#22262d";
+
+const N = 180000;
+let ACTIVE = N;   // lowered automatically on slower computers
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- scene ---------- */
+const stage = document.getElementById("stage");
+const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.setClearColor(0x05070b, 1);
+stage.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x05070b);
+scene.fog = new THREE.FogExp2(0x05070b, 0.035);
+const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 200);
+camera.position.set(0, 0.2, 11.5);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.enablePan = false;
+controls.minDistance = 6; controls.maxDistance = 20;
+controls.target.set(0, 0.4, 0);
+
+/* faint floor + ceiling grid for a sense of place */
+const floor = new THREE.GridHelper(40, 40, 0x1d2733, 0x10161e);
+floor.position.y = -4.2; floor.material.transparent = true; floor.material.opacity = 0.55; scene.add(floor);
+/* LED ceiling emitter: a dark slab whose underside is a dot-matrix of LEDs, with light strands falling from it */
+const CEIL_Y = 4.6, FLOOR_LEVEL = -4.2;
+{
+  const lc = document.createElement("canvas"); lc.width = lc.height = 1024;
+  const g = lc.getContext("2d");
+  g.fillStyle = "#06080c"; g.fillRect(0, 0, 1024, 1024);
+  const n = 44, step = 1024 / n;
+  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+    const dx = (i + 0.5) / n - 0.5, dy = (j + 0.5) / n - 0.5, fall = Math.max(0, 1 - Math.hypot(dx, dy) * 1.5);
+    const b = (0.18 + 0.82 * Math.random() ** 2) * (0.35 + 0.65 * fall);
+    g.fillStyle = `rgba(225,236,255,${b.toFixed(3)})`;
+    g.beginPath(); g.arc((i + 0.5) * step, (j + 0.5) * step, step * 0.17, 0, Math.PI * 2); g.fill();
+  }
+  const ledTex = new THREE.CanvasTexture(lc); ledTex.colorSpace = THREE.SRGBColorSpace;
+  ledTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  const slab = new THREE.Mesh(new THREE.BoxGeometry(7.6, 0.55, 7.6), new THREE.MeshBasicMaterial({ color: 0x090c12 }));
+  slab.position.y = CEIL_Y + 0.28; scene.add(slab);
+  const led = new THREE.Mesh(new THREE.PlaneGeometry(6.8, 6.8), new THREE.MeshBasicMaterial({ map: ledTex, toneMapped: false, fog: false }));
+  led.rotation.x = Math.PI / 2; led.position.y = CEIL_Y - 0.005; scene.add(led);
+}
+const strandMat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false });
+{
+  const S = 70, sp = new Float32Array(S * 6), sc = new Float32Array(S * 6);
+  for (let i = 0; i < S; i++) {
+    const x = (Math.random() - 0.5) * 6.2, z = (Math.random() - 0.5) * 6.2, len = 1 + Math.random() * 6.5, b = 0.25 + Math.random() * 0.55;
+    sp.set([x, CEIL_Y - 0.02, z, x, CEIL_Y - len, z], i * 6);
+    sc.set([0.75 * b, 0.82 * b, b, 0, 0, 0], i * 6);
+  }
+  const sg = new THREE.BufferGeometry();
+  sg.setAttribute("position", new THREE.BufferAttribute(sp, 3)); sg.setAttribute("color", new THREE.BufferAttribute(sc, 3));
+  scene.add(new THREE.LineSegments(sg, strandMat));
+}
+/* soft light shaft from the ceiling to the floor */
+{
+  const sc2 = document.createElement("canvas"); sc2.width = 4; sc2.height = 256;
+  const g = sc2.getContext("2d"), gr = g.createLinearGradient(0, 0, 0, 256);
+  gr.addColorStop(0, "rgba(200,220,255,0.9)"); gr.addColorStop(0.5, "rgba(170,195,235,0.35)"); gr.addColorStop(1, "rgba(150,175,215,0.05)");
+  g.fillStyle = gr; g.fillRect(0, 0, 4, 256);
+  const shaftTex = new THREE.CanvasTexture(sc2);
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.9, CEIL_Y - FLOOR_LEVEL, 48, 1, true),
+    new THREE.MeshBasicMaterial({ map: shaftTex, transparent: true, opacity: 0.025, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false }));
+  shaft.position.y = (CEIL_Y + FLOOR_LEVEL) / 2; shaft.renderOrder = 0; scene.add(shaft);
+}
+
+/* ---------- periodic table wall ---------- */
+const PT_SYMBOLS = ("H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr " +
+  "Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu " +
+  "Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr " +
+  "Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og").split(" ");
+function ptCell(z) {            // → [column 1-18, row 1-10] (rows 9-10 are the f-block)
+  if (z === 1) return [1, 1]; if (z === 2) return [18, 1];
+  if (z <= 4) return [z - 2, 2]; if (z <= 10) return [z + 8, 2];
+  if (z <= 12) return [z - 10, 3]; if (z <= 18) return [z, 3];
+  if (z <= 36) return [z - 18, 4]; if (z <= 54) return [z - 36, 5];
+  if (z <= 56) return [z - 54, 6]; if (z <= 71) return [z - 54, 9]; if (z <= 86) return [z - 68, 6];
+  if (z <= 88) return [z - 86, 7]; if (z <= 103) return [z - 86, 10]; return [z - 100, 7];
+}
+const ptCanvas = document.createElement("canvas");
+ptCanvas.width = 2048; ptCanvas.height = 1240;
+const ptCtx = ptCanvas.getContext("2d");
+const ptTex = new THREE.CanvasTexture(ptCanvas);
+ptTex.colorSpace = THREE.SRGBColorSpace;
+ptTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+const PT_TILE = 104, PT_GAP = 7, PT_X0 = (2048 - (18 * PT_TILE + 17 * PT_GAP)) / 2, PT_Y0 = 70;
+function rgba(hex, a) { const c = new THREE.Color(hex); return `rgba(${c.r*255|0},${c.g*255|0},${c.b*255|0},${a})`; }
+function drawTable(m) {
+  const counts = {};
+  if (m) for (const a of m.atoms) counts[a[0]] = (counts[a[0]] || 0) + 1;
+  const g = ptCtx;
+  g.clearRect(0, 0, ptCanvas.width, ptCanvas.height);
+  // soft lit wall behind the molecule: lifts the mid-tones so dark carbon still reads
+  if (BACKDROP === "table") {
+  const grad = g.createRadialGradient(1024, 560, 60, 1024, 560, 1100);
+  grad.addColorStop(0, "#1d2838"); grad.addColorStop(0.55, "#0e141d"); grad.addColorStop(1, "#05070b");
+  g.fillStyle = grad; g.fillRect(0, 0, ptCanvas.width, ptCanvas.height);
+  }
+  const display = getComputedStyle(document.documentElement).getPropertyValue("--display");
+  const mono = getComputedStyle(document.documentElement).getPropertyValue("--mono");
+  PT_SYMBOLS.forEach((sym, i) => {
+    const z = i + 1, [c, r] = ptCell(z);
+    const x = PT_X0 + (c - 1) * (PT_TILE + PT_GAP);
+    const y = PT_Y0 + (r - 1) * (PT_TILE + PT_GAP) + (r >= 9 ? 26 : 0);
+    const color = ELEMENT_COLORS[sym] || ELEMENT_COLORS.default;
+    const n = counts[sym];
+    if (n) {
+      g.shadowColor = color; g.shadowBlur = 36;
+      g.fillStyle = rgba(color, 0.42); g.fillRect(x, y, PT_TILE, PT_TILE);
+      g.shadowBlur = 0;
+      g.strokeStyle = color; g.lineWidth = 3; g.strokeRect(x + 1.5, y + 1.5, PT_TILE - 3, PT_TILE - 3);
+      g.fillStyle = "#f4f6f8";
+    } else {
+      g.fillStyle = rgba(color, BACKDROP === "lab" ? 0.035 : 0.05); g.fillRect(x, y, PT_TILE, PT_TILE);
+      g.strokeStyle = rgba(color, 0.13); g.lineWidth = 1.5; g.strokeRect(x + 0.75, y + 0.75, PT_TILE - 1.5, PT_TILE - 1.5);
+      g.fillStyle = "rgba(190,205,222,0.20)";
+    }
+    g.textAlign = "left"; g.textBaseline = "top";
+    g.font = `500 17px ${mono}`; g.fillText(z, x + 9, y + 8);
+    g.textAlign = "center"; g.textBaseline = "middle";
+    g.font = `${n ? 500 : 300} 44px ${display}`; g.fillText(sym, x + PT_TILE / 2, y + PT_TILE / 2 + 6);
+    if (n) { g.textAlign = "right"; g.textBaseline = "top"; g.font = `500 17px ${mono}`; g.fillText("×" + n, x + PT_TILE - 9, y + 8); }
+  });
+  ptTex.needsUpdate = true;
+}
+const wall = new THREE.Mesh(
+  new THREE.PlaneGeometry(25, 25 * 1240 / 2048),
+  new THREE.MeshBasicMaterial({ map: ptTex, fog: false, toneMapped: false, color: 0xb8c0cc, transparent: BACKDROP === "lab" })
+);
+wall.position.set(0, -0.4, -12);
+wall.visible = HAS_TABLE;
+if (BACKDROP === "lab") { wall.position.set(0, 1.25, -8.9); wall.scale.setScalar(15 / 25); }
+scene.add(wall);
+controls.minAzimuthAngle = -0.7; controls.maxAzimuthAngle = 0.7;
+controls.minPolarAngle = 1.0; controls.maxPolarAngle = 1.9;
+
+/* ---------- particle buffers ---------- */
+const pos = new Float32Array(N * 3);
+const vel = new Float32Array(N * 3);
+const tgt = new Float32Array(N * 3);
+const nextTgt = new Float32Array(N * 3);
+const col = new Float32Array(N * 3);
+const tgtCol = new Float32Array(N * 3);
+const nextCol = new Float32Array(N * 3);
+const release = new Float32Array(N);
+const pending = new Uint8Array(N);
+const seed = new Float32Array(N);
+const size = new Float32Array(N);
+for (let i = 0; i < N; i++) {
+  seed[i] = Math.random() * 100;
+  size[i] = 0.6 + Math.random() * 0.8;
+  pos[i*3]   = (Math.random() - 0.5) * 3;
+  pos[i*3+1] = CEIL_Y - 0.1 - Math.random() * 0.25;   // wait at the LED ceiling until the lab is entered
+  tgt[i*3] = pos[i*3]; tgt[i*3+1] = pos[i*3+1]; tgt[i*3+2] = pos[i*3+2];
+  pos[i*3+2] = (Math.random() - 0.5) * 3;
+}
+
+const geo = new THREE.BufferGeometry();
+geo.setAttribute("position", new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage));
+geo.setAttribute("color", new THREE.BufferAttribute(col, 3).setUsage(THREE.DynamicDrawUsage));
+geo.setAttribute("seed", new THREE.BufferAttribute(seed, 1));
+geo.setAttribute("psize", new THREE.BufferAttribute(size, 1));
+const owner = new Float32Array(N).fill(-1);   // which atom / bond / lone pair each particle belongs to
+geo.setAttribute("owner", new THREE.BufferAttribute(owner, 1).setUsage(THREE.DynamicDrawUsage));
+
+const mat = new THREE.ShaderMaterial({
+  transparent: true, depthWrite: false,
+  blending: IS_STAGE ? THREE.NormalBlending : THREE.AdditiveBlending,
+  defines: IS_STAGE ? { SOLID: 1 } : {},
+  uniforms: { uTime: { value: 0 }, uSize: { value: 18 }, uPR: { value: renderer.getPixelRatio() }, uJitter: { value: reduceMotion ? 0.004 : 0.018 }, uGain: { value: 1.0 }, uHover: { value: -1 } },
+  vertexShader: `
+    attribute float seed; attribute float psize; attribute vec3 color; attribute float owner;
+    uniform float uTime, uSize, uPR, uJitter, uHover;
+    varying vec3 vColor; varying float vFade, vHi, vDim;
+    void main() {
+      vec3 p = position;
+      p += uJitter * vec3(sin(uTime*1.7+seed*3.1), cos(uTime*1.3+seed*2.3), sin(uTime*1.1+seed*5.7));
+      vec4 mv = modelViewMatrix * vec4(p, 1.0);
+      gl_Position = projectionMatrix * mv;
+      vHi = (uHover >= 0.0 && abs(owner - uHover) < 0.5) ? 1.0 : 0.0;
+      vDim = (uHover >= 0.0 && vHi < 0.5) ? 0.55 : 1.0;
+      gl_PointSize = uSize * psize * uPR / -mv.z * (1.0 + 0.45 * vHi);
+      vColor = color;
+      vFade = 0.75 + 0.25 * sin(uTime*2.0 + seed*7.0);
+    }`,
+  fragmentShader: `
+    uniform float uGain;
+    varying vec3 vColor; varying float vFade, vHi, vDim;
+    void main() {
+      float d = length(gl_PointCoord - 0.5);
+      float a = smoothstep(0.5, 0.0, d);
+      a *= a;
+      #ifdef SOLID
+        vec3 c = vColor * (0.85 + 0.3 * vFade); c = mix(c, c * 1.5 + 0.2, vHi);
+        gl_FragColor = vec4(c, a * 0.38 * uGain * mix(vDim, 1.7, vHi));   // true colours: dark carbon reads as dark
+      #else
+        vec3 c = mix(vColor, vColor * 1.6 + 0.2, vHi);
+        gl_FragColor = vec4(c * a * 0.22 * vFade * uGain * mix(vDim, 1.8, vHi), 1.0);
+      #endif
+    }`
+});
+const cloud = new THREE.Points(geo, mat);
+scene.add(cloud);
+cloud.renderOrder = 3;
+
+/* ---------- spotlit lab stage ---------- */
+let mirror = null;
+const mist = [];
+if (IS_STAGE) {
+  floor.visible = false;
+  const FLOOR_Y = -4.2;
+  // back wall: concrete panels with a soft pool of light behind the molecule
+  const wc = document.createElement("canvas"); wc.width = 1536; wc.height = 1024;
+  const g = wc.getContext("2d");
+  g.fillStyle = "#06090e"; g.fillRect(0, 0, 1536, 1024);
+  const pool = g.createRadialGradient(768, 780, 20, 768, 780, 620);
+  pool.addColorStop(0, "#5a6f93"); pool.addColorStop(0.3, "#2c3a54"); pool.addColorStop(0.7, "#0f1622"); pool.addColorStop(1, "rgba(6,9,14,0)");
+  g.fillStyle = pool; g.fillRect(0, 0, 1536, 1024);
+  for (let i = 0; i < 9000; i++) {   // concrete grain
+    g.fillStyle = Math.random() < 0.5 ? "rgba(0,0,0,0.18)" : "rgba(255,255,255,0.025)";
+    g.fillRect(Math.random() * 1536, Math.random() * 1024, 2, 2);
+  }
+  g.fillStyle = "rgba(0,0,0,0.2)";
+  for (let x = 192; x < 1536; x += 192) g.fillRect(x, 0, 3, 1024);
+  for (let y = 256; y < 1024; y += 256) g.fillRect(0, y, 1536, 3);
+  const wallTex = new THREE.CanvasTexture(wc); wallTex.colorSpace = THREE.SRGBColorSpace;
+  const back = new THREE.Mesh(new THREE.PlaneGeometry(30, 20), new THREE.MeshBasicMaterial({ map: wallTex, fog: false }));
+  back.position.set(0, FLOOR_Y + 10, -9); scene.add(back);
+
+  // mirrored copy of the particle cloud = reflection in the wet floor
+  mirror = new THREE.Points(geo, new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, blending: THREE.NormalBlending, defines: { SOLID: 1 },
+    uniforms: { ...mat.uniforms, uGain: { value: 0.35 } },
+    vertexShader: mat.vertexShader, fragmentShader: mat.fragmentShader
+  }));
+  mirror.scale.y = -1; mirror.position.y = 2 * FLOOR_Y; mirror.renderOrder = 1;
+  scene.add(mirror);
+
+  // glossy dark floor laid over the reflection, with the wall's light spilling onto it
+  const fc = document.createElement("canvas"); fc.width = 1024; fc.height = 1024;
+  const f = fc.getContext("2d");
+  f.fillStyle = "#04060a"; f.fillRect(0, 0, 1024, 1024);
+  const spill = f.createRadialGradient(512, 120, 10, 512, 120, 640);
+  spill.addColorStop(0, "rgba(70,90,125,0.55)"); spill.addColorStop(1, "rgba(4,6,10,0)");
+  f.fillStyle = spill; f.fillRect(0, 0, 1024, 1024);
+  for (let i = 0; i < 260; i++) {    // faint wet streaks
+    f.fillStyle = "rgba(140,160,190,0.05)";
+    f.fillRect(Math.random() * 1024, Math.random() * 1024, 1 + Math.random() * 2, 20 + Math.random() * 90);
+  }
+  // the pool under the molecule: the floor turns into still dark water, so the reflection is clearer there
+  const POOL = 3.5, px0 = (15 - POOL) / 30 * 1024, px1 = (15 + POOL) / 30 * 1024, pz0 = (9 - POOL) / 26 * 1024, pz1 = (9 + POOL) / 26 * 1024;
+  f.clearRect(px0, pz0, px1 - px0, pz1 - pz0);
+  f.fillStyle = "rgba(2,4,9,0.38)"; f.fillRect(px0, pz0, px1 - px0, pz1 - pz0);
+  const floorTex = new THREE.CanvasTexture(fc); floorTex.colorSpace = THREE.SRGBColorSpace;
+  const wet = new THREE.Mesh(new THREE.PlaneGeometry(30, 26),
+    new THREE.MeshBasicMaterial({ map: floorTex, transparent: true, opacity: 0.8, depthWrite: false }));
+  wet.rotation.x = -Math.PI / 2; wet.position.set(0, FLOOR_Y, 4); wet.renderOrder = 2;
+  scene.add(wet);
+
+  // pool rim
+  const rimMat = new THREE.MeshBasicMaterial({ color: 0x10151d });
+  for (const [w, d, x, z] of [[7.5, 0.25, 0, -3.62], [7.5, 0.25, 0, 3.62], [0.25, 7.5, -3.62, 0], [0.25, 7.5, 3.62, 0]]) {
+    const rim = new THREE.Mesh(new THREE.BoxGeometry(w, 0.16, d), rimMat);
+    rim.position.set(x, FLOOR_Y + 0.08, z); scene.add(rim);
+  }
+  // low drifting mist around the pool
+  const mc = document.createElement("canvas"); mc.width = mc.height = 256;
+  const mg = mc.getContext("2d");
+  for (let i = 0; i < 26; i++) {
+    const x = 50 + Math.random() * 156, y = 80 + Math.random() * 96, r = 30 + Math.random() * 60;
+    const gr = mg.createRadialGradient(x, y, 0, x, y, r);
+    gr.addColorStop(0, "rgba(255,255,255,0.16)"); gr.addColorStop(1, "rgba(255,255,255,0)");
+    mg.fillStyle = gr; mg.fillRect(0, 0, 256, 256);
+  }
+  const mistTex = new THREE.CanvasTexture(mc);
+  for (let i = 0; i < 16; i++) {
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: mistTex, color: 0xb9c8dc, transparent: true, opacity: 0.035 + Math.random() * 0.04,
+      depthWrite: false, blending: THREE.AdditiveBlending, rotation: Math.random() * Math.PI }));
+    const w = 4 + Math.random() * 4;
+    s.scale.set(w, w * 0.45, 1);
+    s.position.set((Math.random() - 0.5) * 10, FLOOR_Y + 0.25 + Math.random() * 0.6, (Math.random() - 0.5) * 7 - 1);
+    s.userData = { x0: s.position.x, sp: 0.05 + Math.random() * 0.1, ph: Math.random() * 6.28 };
+    s.renderOrder = 4; mist.push(s); scene.add(s);
+  }
+
+  // dark pillars framing the stage
+  const pillarMat = new THREE.MeshBasicMaterial({ color: 0x0a0f17 });
+  for (const sx of [-1, 1]) {
+    const pillar = new THREE.Mesh(new THREE.BoxGeometry(1.8, 20, 1.8), pillarMat);
+    pillar.position.set(sx * 9.6, FLOOR_Y + 10, -6.5); scene.add(pillar);
+  }
+}
+
+/* ambient rain from the ceiling grid */
+const RAIN = 900;
+const rainPos = new Float32Array(RAIN * 3), rainSpd = new Float32Array(RAIN);
+for (let i = 0; i < RAIN; i++) {
+  rainPos[i*3] = (Math.random()-0.5)*7; rainPos[i*3+1] = Math.random()*9.6-4.2; rainPos[i*3+2] = (Math.random()-0.5)*7;
+  rainSpd[i] = 0.6 + Math.random()*1.4;
+}
+const rainGeo = new THREE.BufferGeometry();
+rainGeo.setAttribute("position", new THREE.BufferAttribute(rainPos, 3).setUsage(THREE.DynamicDrawUsage));
+const rain = new THREE.Points(rainGeo, new THREE.PointsMaterial({ color: 0x8fa3b8, size: 0.025, transparent: true, opacity: 0.45, depthWrite: false, blending: THREE.AdditiveBlending }));
+scene.add(rain);
+
+/* ---------- bloom ---------- */
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.7, 0.25, 0.4);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
+/* ---------- molecule → particle targets ---------- */
+const tmpC = new THREE.Color();
+function hexToRGB(hex) { tmpC.set(hex); return [tmpC.r, tmpC.g, tmpC.b]; }
+function elColor(el) { return ELEMENT_COLORS[el] || ELEMENT_COLORS.default; }
+/* van der Waals radii (Å, Bondi) for the space-filling model */
+const VDW = { H: 1.20, C: 1.70, N: 1.55, O: 1.52, F: 1.47, P: 1.80, S: 1.80, Cl: 1.75, Br: 1.85, I: 1.98, default: 1.80 };
+const LP_COLOR = "#c9b8ff";            // lone-pair clouds (soft lilac)
+let STYLE = "ball";                    // "ball" | "space" | "wire"
+let SHOW_LP = true;
+const STYLE_NAMES = { ball: "ball-and-stick", space: "space-filling", wire: "wireframe" };
+function atomRadius(el) {
+  if (STYLE === "space") return (VDW[el] ?? VDW.default) * 0.92;
+  if (STYLE === "wire") return 0.11;
+  return RADII[el] ?? RADII.default;
+}
+const RANK = el => el === "C" ? 0 : el === "H" ? 2 : 1;   // build order: carbon skeleton → heteroatoms → hydrogens
+const nextOwner = new Float32Array(N), nextRank = new Float32Array(N);
+let pick = { atoms: [], bonds: [], lps: [] };               // hover targets in the cloud's local space
+const gauss = () => (Math.random() + Math.random() + Math.random() - 1.5) * 2;
+
+function sampleMolecule(m, outP, outC) {
+  const atoms = m.atoms.map((a, idx) => ({ el: a[0], idx, p: new THREE.Vector3(a[1], a[2], a[3]), r: atomRadius(a[0]) }));
+  let maxR = 0; for (const a of atoms) maxR = Math.max(maxR, a.p.length() + a.r);
+  const scale = STYLE === "space" ? Math.min(1.5, 3.0 / maxR) : Math.min(2.4, 3.4 / maxR);
+  const showLP = SHOW_LP && STYLE !== "space";
+  const lpCount = atoms.map(() => 0);
+  for (const l of m.lp || []) lpCount[l[0]]++;
+
+  const shapes = [];
+  for (const a of atoms) shapes.push({ type: "atom", a, owner: a.idx, rank: RANK(a.el), w: STYLE === "wire" ? 0.12 : a.r * a.r * 4 });
+  const nbrs = atoms.map(() => []);
+  for (const [i, j] of m.bonds) { nbrs[i].push(j); nbrs[j].push(i); }
+  const bondPick = [];
+  m.bonds.forEach(([i, j, order], bi) => {
+    const A = atoms[i], B = atoms[j];
+    const len = A.p.distanceTo(B.p);
+    const n = Math.max(1, Math.round(order));   // 1 single, 2 double, 3 triple
+    const dir = new THREE.Vector3().subVectors(B.p, A.p).normalize();
+    // multiple-bond strands lie in the molecule's local plane, like a physical model
+    const ref = nbrs[i].find(x => x !== j) ?? nbrs[j].find(x => x !== i);
+    const perp = new THREE.Vector3();
+    if (ref !== undefined) {
+      const r0 = nbrs[i].includes(ref) ? A.p : B.p;
+      perp.subVectors(atoms[ref].p, r0);
+      perp.addScaledVector(dir, -perp.dot(dir));
+    }
+    if (perp.lengthSq() < 1e-6) { perp.set(0, 1, 0); if (Math.abs(dir.y) > 0.9) perp.set(1, 0, 0); perp.addScaledVector(dir, -perp.dot(dir)); }
+    perp.normalize();
+    const perp2 = new THREE.Vector3().crossVectors(dir, perp);
+    const w = STYLE === "space" ? 0 : len * (STYLE === "wire" ? 0.35 : 0.5) * n;
+    shapes.push({ type: "bond", A, B, n, len, dir, perp, perp2, owner: 10000 + bi, rank: Math.max(RANK(A.el), RANK(B.el)) + 0.5, w });
+    if (STYLE !== "space") bondPick.push({ A: A.p.clone().multiplyScalar(scale), B: B.p.clone().multiplyScalar(scale), n, len, a: A.el, b: B.el, owner: 10000 + bi });
+  });
+  const lpPick = [];
+  if (showLP) (m.lp || []).forEach(([ai, dx, dy, dz], li) => {
+    const a = atoms[ai], d = new THREE.Vector3(dx, dy, dz).normalize();
+    const c = a.p.clone().addScaledVector(d, a.r + 0.30);
+    const q = new THREE.Vector3(0, 1, 0); if (Math.abs(d.y) > 0.9) q.set(1, 0, 0);
+    q.addScaledVector(d, -q.dot(d)).normalize();
+    const q2 = new THREE.Vector3().crossVectors(d, q);
+    shapes.push({ type: "lp", a, d, c, q, q2, owner: 20000 + li, rank: 3, w: 0.22 });
+    lpPick.push({ c: c.clone().multiplyScalar(scale), r: 0.3 * scale, el: a.el, owner: 20000 + li });
+  });
+
+  const total = shapes.reduce((s, x) => s + x.w, 0);
+  let k = 0;
+  const v = new THREE.Vector3(), t3 = new THREE.Vector3();
+  const lpRGB = hexToRGB(LP_COLOR);
+  shapes.forEach((s, si) => {
+    const count = si === shapes.length - 1 ? N - k : Math.round(N * s.w / total);
+    for (let c = 0; c < count && k < N; c++, k++) {
+      let rgb, b = 0.8 + Math.random() * 0.35;
+      if (s.type === "atom") {
+        // points on/near the sphere shell; space-filling keeps only the outer (union) surface
+        for (let tries = 0; tries < 8; tries++) {
+          const u = Math.random()*2-1, th = Math.random()*Math.PI*2, sq = Math.sqrt(1-u*u);
+          const rr = STYLE === "space" ? s.a.r * (0.97 + 0.03 * Math.random()) : s.a.r * (0.82 + 0.18 * Math.cbrt(Math.random()));
+          v.set(sq*Math.cos(th), u, sq*Math.sin(th)).multiplyScalar(rr).add(s.a.p);
+          if (STYLE !== "space") break;
+          let buried = false;
+          for (const o of atoms) if (o !== s.a && v.distanceToSquared(o.p) < o.r * o.r * 0.97) { buried = true; break; }
+          if (!buried) break;
+        }
+        rgb = hexToRGB(elColor(s.a.el));
+      } else if (s.type === "bond") {
+        const t = Math.random();
+        const strand = Math.floor(Math.random() * s.n);
+        const sp = STYLE === "wire" ? 0.2 : 0.30;                 // strand spacing (Å)
+        const off = s.n === 1 ? 0 : (strand - (s.n-1)/2) * sp;
+        const rad = STYLE === "wire" ? (s.n === 1 ? 0.024 : 0.018) : (s.n === 1 ? 0.055 : 0.04);
+        const ang = Math.random()*Math.PI*2, br = rad * Math.sqrt(Math.random());
+        v.copy(s.A.p).addScaledVector(s.dir, t * s.len).addScaledVector(s.perp, off + Math.cos(ang)*br).addScaledVector(s.perp2, Math.sin(ang)*br);
+        rgb = hexToRGB(elColor(t < 0.5 ? s.A.el : s.B.el));      // half-bond coloring
+      } else {
+        // lone pair: a soft lobe with the two electrons as small bright dots
+        if (Math.random() < 0.35) {
+          const side = Math.random() < 0.5 ? -1 : 1;
+          v.copy(s.c).addScaledVector(s.q, side * 0.08).addScaledVector(s.d, 0.04)
+           .add(t3.set(gauss(), gauss(), gauss()).multiplyScalar(0.022));
+          b = 1.15;
+        } else {
+          v.copy(s.c).addScaledVector(s.d, gauss() * 0.13)
+           .addScaledVector(s.q, gauss() * 0.09).addScaledVector(s.q2, gauss() * 0.09);
+          b = 0.7 + Math.random() * 0.3;
+        }
+        rgb = lpRGB;
+      }
+      v.multiplyScalar(scale);
+      outP[k*3] = v.x; outP[k*3+1] = v.y; outP[k*3+2] = v.z;
+      outC[k*3] = rgb[0]*b; outC[k*3+1] = rgb[1]*b; outC[k*3+2] = rgb[2]*b;
+      nextOwner[k] = s.owner; nextRank[k] = s.rank;
+    }
+  });
+  // shuffle so transitions mix atoms and bonds
+  for (let i = N - 1; i > 0; i--) {
+    const j = (Math.random() * (i + 1)) | 0;
+    for (let d = 0; d < 3; d++) {
+      let t = outP[i*3+d]; outP[i*3+d] = outP[j*3+d]; outP[j*3+d] = t;
+      t = outC[i*3+d]; outC[i*3+d] = outC[j*3+d]; outC[j*3+d] = t;
+    }
+    let t = nextOwner[i]; nextOwner[i] = nextOwner[j]; nextOwner[j] = t;
+    t = nextRank[i]; nextRank[i] = nextRank[j]; nextRank[j] = t;
+  }
+  return {
+    atoms: atoms.map(a => ({ p: a.p.clone().multiplyScalar(scale), r: Math.max(a.r, STYLE === "wire" ? 0.22 : 0) * scale, el: a.el, idx: a.idx, lp: lpCount[a.idx], deg: nbrs[a.idx].length, owner: a.idx })),
+    bonds: bondPick, lps: lpPick, lpShown: showLP ? (m.lp || []).length : 0
+  };
+}
+
+/* ---------- UI ---------- */
+const $ = id => document.getElementById(id);
+const list = $("list");
+MOLECULES.forEach((m, i) => {
+  const s = document.createElement("span"); s.textContent = m.name;
+  s.addEventListener("click", () => { userTouched(); show(i); lastSwitch = clock; });
+  list.appendChild(s);
+});
+// formula with subscripts; a trailing charge such as "-2" becomes a superscript "2−"
+function formulaHTML(f) {
+  const m = f.match(/^(.*?)([+-])(\d*)$/);
+  const body = (m ? m[1] : f).replace(/(\d+)/g, "<sub>$1</sub>");
+  return m ? body + `<sup>${m[3]}${m[2] === "-" ? "−" : "+"}</sup>` : body;
+}
+const formulaText = f => f.replace(/([+-])(\d*)$/, (_, s, d) => d + (s === "-" ? "−" : "+"));
+
+/* ---------- transitions ---------- */
+const TRANSITIONS = ["fountain", "explode", "vortex", "build", "sweep"];
+let current = -1, clock = 0, kickMode = "fountain", lastTransition = "";
+function retarget(mode) {
+  pick = sampleMolecule(MOLECULES[current], nextTgt, nextCol);
+  let minY = Infinity, maxY = -Infinity, minX = Infinity, maxX = -Infinity, maxRad = 0.001;
+  for (let k = 0; k < N; k++) {
+    const x = nextTgt[k*3], y = nextTgt[k*3+1], z = nextTgt[k*3+2];
+    if (y < minY) minY = y; if (y > maxY) maxY = y; if (x < minX) minX = x; if (x > maxX) maxX = x;
+    const r = Math.hypot(x, z); if (r > maxRad) maxRad = r;
+  }
+  const spanY = Math.max(0.001, maxY - minY), spanX = Math.max(0.001, maxX - minX);
+  for (let k = 0; k < N; k++) {
+    const x = nextTgt[k*3], y = nextTgt[k*3+1], z = nextTgt[k*3+2];
+    let r;
+    if (mode === "fountain") r = (maxY - y) / spanY * 2.2 + Math.random() * 0.7;           // pours from the top down
+    else if (mode === "explode") r = 0.7 + Math.random() * 1.6;                              // bursts out, falls back in
+    else if (mode === "vortex") r = 0.8 + Math.hypot(x, z) / maxRad * 1.4 + Math.random() * 0.4; // spins up, settles from the axis out
+    else if (mode === "build") r = 0.5 + nextRank[k] * 0.9 + Math.random() * 0.6;          // C skeleton → O/N → H → lone pairs
+    else if (mode === "sweep") r = (x - minX) / spanX * 2.2 + Math.random() * 0.5;          // wave from left to right
+    else r = Math.random() * 0.9;                                                           // flow (style change)
+    release[k] = clock + r; pending[k] = 1;
+  }
+  // what the old particles do while they wait
+  for (let k = 0; k < ACTIVE; k++) {
+    const k3 = k * 3, x = pos[k3], y = pos[k3+1], z = pos[k3+2];
+    if (mode === "explode") {
+      const l = Math.hypot(x, y, z) + 0.3, s = 4 + Math.random() * 4;
+      vel[k3] += x / l * s; vel[k3+1] += y / l * s; vel[k3+2] += z / l * s;
+      tgt[k3] = x / l * (4 + Math.random() * 2); tgt[k3+1] = y / l * (4 + Math.random() * 2); tgt[k3+2] = z / l * (4 + Math.random() * 2);
+    } else if (mode === "vortex") {
+      vel[k3] += -z * 2.5; vel[k3+1] += 1.5 + Math.random() * 2.5; vel[k3+2] += x * 2.5;
+      const a = Math.atan2(z, x) + 1.2, rr = 0.6 + Math.random() * 2.2;
+      tgt[k3] = Math.cos(a) * rr; tgt[k3+1] = 1 + rr * 1.1; tgt[k3+2] = Math.sin(a) * rr;
+    } else if (mode === "build") {
+      const u = Math.random()*2-1, th = Math.random()*Math.PI*2, sq = Math.sqrt(1-u*u), rr = 3.4 * Math.cbrt(Math.random());
+      tgt[k3] = sq * Math.cos(th) * rr; tgt[k3+1] = u * rr; tgt[k3+2] = sq * Math.sin(th) * rr;
+    }
+  }
+  kickMode = mode;
+}
+/* decoding text: characters scramble, then settle left to right */
+const SCR = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%&*+=<>";
+function decode(el, text, html, dur = 650) {
+  const id = (el._dec = (el._dec || 0) + 1);
+  if (reduceMotion) { if (html) el.innerHTML = html; else el.textContent = text; return; }
+  const start = performance.now(), chars = [...text];
+  const step = now => {
+    if (el._dec !== id) return;
+    const p = Math.min(1, (now - start) / dur), n = Math.floor(p * chars.length);
+    el.textContent = chars.map((c, i) => i < n || c === " " ? c : SCR[(Math.random() * SCR.length) | 0]).join("");
+    if (p < 1) requestAnimationFrame(step); else if (html) el.innerHTML = html; else el.textContent = text;
+  };
+  requestAnimationFrame(step);
+}
+const COURSE_TAG = "CHM 2211";
+const SOURCE = "Families and examples: OpenStax Organic Chemistry (McMurry), Table 3.1", SOURCE_URL = "https://openstax.org/books/organic-chemistry/pages/3-1-functional-groups";
+if (SOURCE) $("credit").innerHTML = SOURCE_URL ? `<a href="${SOURCE_URL}" target="_blank" rel="noopener">${SOURCE}</a>` : SOURCE;
+const STYLE_CHIPS = { ball: "Ball & stick", space: "Space-filling", wire: "Wireframe" };
+const rail = $("rail");
+MOLECULES.forEach((m, i) => {
+  const b = document.createElement("button"); b.type = "button"; b.setAttribute("aria-label", m.name);
+  b.addEventListener("click", () => { userTouched(); show(i); lastSwitch = clock; });
+  rail.appendChild(b);
+});
+function updateInfo() {
+  const m = MOLECULES[current];
+  $("counter").textContent = String(current+1).padStart(2,"0") + " / " + String(MOLECULES.length).padStart(2,"0");
+  [...list.children].forEach((s, j) => s.classList.toggle("on", j === current));
+  const nlp = (m.lp || []).length;
+  $("meta").textContent = "Molecule " + String(current+1).padStart(2,"0") + " · " + m.atoms.length + " atoms · " + m.bonds.length + " bonds" + (nlp ? " · " + nlp + " lone pairs" : "");
+  if ($("name").dataset.v !== m.name) { $("name").dataset.v = m.name; $("name").classList.toggle("long", m.name.length > 13); decode($("name"), m.name, null, 750); decode($("formula"), formulaText(m.formula), formulaHTML(m.formula), 650);
+    $("chipTopic").hidden = !m.topic; if (m.topic) decode($("chipTopic"), m.topic, null, 500);
+    $("ending").hidden = !m.ending; if (m.ending) $("ending").textContent = "Name ending: " + (m.ending === "None" ? "none" : m.ending); }
+  decode($("chipCourse"), COURSE_TAG, null, 450);
+  if ($("chipStyle").dataset.v !== STYLE) { $("chipStyle").dataset.v = STYLE; decode($("chipStyle"), STYLE_CHIPS[STYLE], null, 450); }
+  $("mass").textContent = m.mass.toFixed(2) + " g/mol";
+  [...rail.children].forEach((b, j) => { b.classList.toggle("on", j === current); b.setAttribute("aria-current", j === current ? "true" : "false"); });
+  const els = [...new Set(m.atoms.map(a => a[0]))].sort((a,b) => "CHNOPS".indexOf(a) - "CHNOPS".indexOf(b));
+  let html = els.map(e => `<span><i style="background:${elColor(e)};color:${elColor(e)}"></i>${ELEMENT_NAMES[e]||e}</span>`).join("");
+  if (pick.lpShown) html += `<span><i style="background:${LP_COLOR};color:${LP_COLOR}"></i>Lone pair</span>`;
+  $("legend").innerHTML = html;
+  document.querySelectorAll("[data-style]").forEach(b => b.setAttribute("aria-pressed", b.dataset.style === STYLE));
+  $("lp").setAttribute("aria-pressed", SHOW_LP); $("lp").disabled = STYLE === "space";
+  $("lp").title = STYLE === "space" ? "Lone pairs sit inside the space-filling surface" : "";
+}
+function show(i) {
+  current = (i + MOLECULES.length) % MOLECULES.length;
+  let mode = "fountain";
+  if (lastTransition) { const opts = TRANSITIONS.filter(t => t !== lastTransition); mode = opts[(Math.random() * opts.length) | 0]; }
+  if (reduceMotion) mode = "flow";
+  lastTransition = mode;
+  retarget(mode);
+  updateInfo();
+  if (HAS_TABLE) drawTable(MOLECULES[current]);
+}
+function setStyle(s) { STYLE = s; retarget("flow"); updateInfo(); userTouched(); }
+document.querySelectorAll("[data-style]").forEach(b => b.addEventListener("click", () => setStyle(b.dataset.style)));
+$("lp").addEventListener("click", () => { SHOW_LP = !SHOW_LP; retarget("flow"); updateInfo(); userTouched(); });
+
+let auto = true, lastTouch = -100, lastSwitch = 0;
+const AUTO_EVERY = 18;
+function userTouched() { lastTouch = clock; }
+$("prev").onclick = () => { userTouched(); show(current - 1); lastSwitch = clock; };
+$("next").onclick = () => { userTouched(); show(current + 1); lastSwitch = clock; };
+$("auto").onclick = e => { auto = !auto; e.currentTarget.setAttribute("aria-pressed", auto); e.currentTarget.textContent = auto ? "Auto" : "Paused"; lastSwitch = clock; };
+addEventListener("keydown", e => {
+  if (e.key === "ArrowRight") $("next").click();
+  if (e.key === "ArrowLeft") $("prev").click();
+});
+
+/* ---------- pointer ---------- */
+const ndc = new THREE.Vector2(9, 9), ray = new THREE.Raycaster();
+const plane = new THREE.Plane(), hit = new THREE.Vector3(), mLocal = new THREE.Vector3(), mPrev = new THREE.Vector3();
+let pointerIn = false, dragging = false, px = 0, py = 0, mVel = new THREE.Vector3();
+function setPointer(e) { px = e.clientX; py = e.clientY; ndc.set(px / innerWidth * 2 - 1, -(py / innerHeight) * 2 + 1); pointerIn = true;
+  $("xy").textContent = `X ${(px / innerWidth).toFixed(3)} · Y ${(py / innerHeight).toFixed(3)}`; }
+$("arrowPrev").addEventListener("click", () => $("prev").click());
+$("arrowNext").addEventListener("click", () => $("next").click());
+/* live clock */
+const CLOCK_PLACE = "Daytona Beach", CLOCK_TZ = "America/New_York";
+const clockFmt = new Intl.DateTimeFormat("en-GB", { timeZone: CLOCK_TZ, hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+const tickClock = () => { $("clock").textContent = clockFmt.format(new Date()) + " " + CLOCK_PLACE; };
+tickClock(); setInterval(tickClock, 1000);
+renderer.domElement.addEventListener("pointermove", setPointer);
+renderer.domElement.addEventListener("pointerdown", e => { setPointer(e); dragging = e.pointerType === "mouse"; });
+addEventListener("pointerup", () => { dragging = false; });
+renderer.domElement.addEventListener("pointerleave", () => { pointerIn = false; });
+
+/* ---------- hover: which atom, bond or lone pair is under the pointer ---------- */
+const tip = $("tip");
+const ro = new THREE.Vector3(), rd = new THREE.Vector3(), tv = new THREE.Vector3(), tw = new THREE.Vector3(), tp = new THREE.Vector3();
+const BOND_SYM = ["", "–", "=", "≡"], BOND_NAME = ["", "single", "double", "triple"];
+let hoverKey = "";
+function hoverTest() {
+  if (!pointerIn || dragging) return null;
+  ray.setFromCamera(ndc, camera);
+  ro.copy(ray.ray.origin).applyMatrix4(inv); rd.copy(ray.ray.direction).transformDirection(inv);
+  let best = Infinity, hitObj = null;
+  const sphere = (c, r, obj, bias) => {
+    tv.subVectors(c, ro); const t = tv.dot(rd); if (t < 0) return;
+    const d2 = tv.lengthSq() - t * t; if (d2 > r * r) return;
+    const th = t - Math.sqrt(r * r - d2) + bias;
+    if (th < best) { best = th; hitObj = obj; }
+  };
+  for (const a of pick.atoms) sphere(a.p, a.r, { kind: "atom", ...a }, 0);
+  for (const l of pick.lps) sphere(l.c, l.r, { kind: "lp", ...l }, 0.02);
+  for (const b of pick.bonds) {
+    tv.subVectors(b.B, b.A); const L2 = tv.lengthSq();
+    tw.subVectors(ro, b.A);
+    const bb = rd.dot(tv), dd = rd.dot(tw), ee = tv.dot(tw), den = L2 - bb * bb;
+    let tc = den > 1e-6 ? (ee - bb * dd) / den : 0; tc = Math.min(1, Math.max(0, tc));
+    tp.copy(b.A).addScaledVector(tv, tc);
+    const sc = Math.max(0, tp.clone().sub(ro).dot(rd));
+    const dist = ro.clone().addScaledVector(rd, sc).distanceTo(tp);
+    if (dist < (STYLE === "wire" ? 0.12 : 0.17) && sc + 0.08 < best) { best = sc + 0.08; hitObj = { kind: "bond", ...b }; }
+  }
+  return hitObj;
+}
+function tipHTML(h) {
+  const dot = c => `<i style="background:${c}"></i>`;
+  if (h.kind === "atom") {
+    const extra = h.lp ? ` · ${h.lp} lone pair${h.lp > 1 ? "s" : ""}` : "";
+    return `${dot(elColor(h.el))}<b>${h.el}</b> ${ELEMENT_NAMES[h.el] || h.el}<span>atom ${h.idx + 1} · bonded to ${h.deg}${extra}</span>`;
+  }
+  if (h.kind === "bond") return `${dot(elColor(h.a))}${dot(elColor(h.b))}<b>${h.a}${BOND_SYM[h.n]}${h.b}</b> ${BOND_NAME[h.n]} bond<span>length ${h.len.toFixed(2)} Å</span>`;
+  return `${dot(LP_COLOR)}<b>Lone pair</b><span>non-bonding electron pair on ${ELEMENT_NAMES[h.el] || h.el} (${h.el})</span>`;
+}
+
+/* ---------- leader line from molecule to label ---------- */
+const anchor = new THREE.Vector3();
+function updateLeader() {
+  if (innerWidth <= 640) return;
+  const r = $("name").getBoundingClientRect();
+  anchor.set(1.4, 1.2, 0).applyMatrix4(cloud.matrixWorld).project(camera);
+  const ax = (anchor.x + 1) / 2 * innerWidth, ay = (1 - anchor.y) / 2 * innerHeight;
+  const ex = r.left - 10, ey = r.top + r.height * 0.55;
+  const kx = ex - 40;
+  $("leaderLine").setAttribute("points", `${ax},${ay} ${kx},${ey} ${ex},${ey}`);
+  $("leaderDot").setAttribute("cx", ax); $("leaderDot").setAttribute("cy", ay);
+}
+
+/* ---------- loop ---------- */
+// before entering: show molecule 1's info; the particles wait at the LED ceiling
+let entered = false;
+current = 0;
+pick = sampleMolecule(MOLECULES[0], nextTgt, nextCol);
+updateInfo();
+if (HAS_TABLE) { drawTable(MOLECULES[0]); document.fonts?.ready.then(() => drawTable(MOLECULES[current])); }
+function enterLab() {
+  entered = true; lastTransition = "fountain";
+  retarget("fountain");
+  lastSwitch = clock; userTouched();
+  $("name").dataset.v = ""; updateInfo();
+}
+let last = performance.now(), perfT = 0, perfF = 0;
+const inv = new THREE.Matrix4();
+function frame(now) {
+  const raw = (now - last) / 1000;
+  const dt = Math.max(0, Math.min(0.033, raw)); last = now; clock += dt;
+  // performance guard: if the frame rate stays low, use fewer particles
+  perfT += raw; perfF++;
+  if (perfT > 2) {
+    if (clock > 3 && perfF / perfT < 40 && ACTIVE > N / 4) { ACTIVE = Math.floor(ACTIVE * 0.75); geo.setDrawRange(0, ACTIVE); }
+    perfT = 0; perfF = 0;
+  }
+  mat.uniforms.uTime.value = clock;
+
+  if (entered && auto && clock - lastSwitch > AUTO_EVERY && clock - lastTouch > 6) { show(current + 1); lastSwitch = clock; }
+
+  cloud.rotation.y += dt * (reduceMotion ? 0.05 : 0.16);
+  if (mirror) mirror.rotation.y = cloud.rotation.y;
+  cloud.updateMatrixWorld();
+  if (BACKDROP === "table" && !reduceMotion) {   // slow drift of the periodic table wall
+    wall.position.x = Math.sin(clock * 0.05) * 0.8;
+    wall.position.y = -0.4 + Math.sin(clock * 0.037 + 1.3) * 0.3;
+    wall.rotation.y = Math.sin(clock * 0.03) * 0.06;
+  }
+
+  inv.copy(cloud.matrixWorld).invert();
+  const h = hoverTest();
+  const key = h ? h.kind + h.owner : "";
+  mat.uniforms.uHover.value = h ? h.owner : -1;
+  if (key !== hoverKey) { hoverKey = key; tip.hidden = !h; if (h) tip.innerHTML = tipHTML(h); }
+  if (h) {
+    userTouched();   // hold the current molecule while someone is reading a label
+    const tx = Math.min(px + 16, innerWidth - tip.offsetWidth - 8), ty = Math.max(8, py - tip.offsetHeight - 12);
+    tip.style.transform = `translate(${tx}px, ${ty}px)`;
+  }
+  renderer.domElement.style.cursor = h ? "help" : "";
+
+  // pointer → local space
+  let mActive = false;
+  if (pointerIn) {
+    ray.setFromCamera(ndc, camera);
+    plane.setFromNormalAndCoplanarPoint(camera.getWorldDirection(new THREE.Vector3()).negate(), new THREE.Vector3(0,0,0));
+    if (ray.ray.intersectPlane(plane, hit)) {
+      mPrev.copy(mLocal); mLocal.copy(hit).applyMatrix4(inv);
+      mVel.subVectors(mLocal, mPrev).multiplyScalar(1 / Math.max(dt, 1e-3)).clampLength(0, 12);
+      mActive = true;
+    }
+  }
+  const R = 1.25, R2 = R * R;
+  const push = Math.min(1, mVel.length() / 5);   // slow pointer = read labels; fast swipe = scatter
+  let ownerDirty = false;
+  const K = 7.5, D = 4.2;
+  for (let i = 0; i < ACTIVE; i++) {
+    const i3 = i * 3;
+    if (pending[i] && clock >= release[i]) {
+      pending[i] = 0;
+      tgt[i3] = nextTgt[i3]; tgt[i3+1] = nextTgt[i3+1]; tgt[i3+2] = nextTgt[i3+2];
+      tgtCol[i3] = nextCol[i3]; tgtCol[i3+1] = nextCol[i3+1]; tgtCol[i3+2] = nextCol[i3+2];
+      owner[i] = nextOwner[i]; ownerDirty = true;
+      const x = pos[i3], z = pos[i3+2];
+      if (kickMode === "fountain") {          // swirl around the vertical axis, plus a little lift
+        vel[i3] += -z * 2.2 + (Math.random()-0.5) * 1.5; vel[i3+1] += Math.random() * 1.2; vel[i3+2] += x * 2.2 + (Math.random()-0.5) * 1.5;
+      } else if (kickMode === "vortex") {
+        vel[i3] += -z * 1.5; vel[i3+1] -= 0.5; vel[i3+2] += x * 1.5;
+      } else if (kickMode === "sweep") {
+        vel[i3+1] += 0.8; vel[i3+2] += 2;
+      } else if (kickMode === "build") {
+        vel[i3] += (Math.random()-0.5); vel[i3+1] += (Math.random()-0.5); vel[i3+2] += (Math.random()-0.5);
+      }
+    }
+    let ax = (tgt[i3] - pos[i3]) * K - vel[i3] * D;
+    let ay = (tgt[i3+1] - pos[i3+1]) * K - vel[i3+1] * D;
+    let az = (tgt[i3+2] - pos[i3+2]) * K - vel[i3+2] * D;
+    if (mActive) {
+      const dx = pos[i3] - mLocal.x, dy = pos[i3+1] - mLocal.y, dz = pos[i3+2] - mLocal.z;
+      const d2 = dx*dx + dy*dy + dz*dz;
+      if (d2 < R2) {
+        const d = Math.sqrt(d2) + 1e-4, f = (1 - d / R); const ff = f * f * 90 * push;
+        ax += dx / d * ff + mVel.x * f * 9 - dz / d * ff * 0.6;
+        ay += dy / d * ff + mVel.y * f * 9;
+        az += dz / d * ff + mVel.z * f * 9 + dx / d * ff * 0.6;
+      }
+    }
+    vel[i3] += ax * dt; vel[i3+1] += ay * dt; vel[i3+2] += az * dt;
+    pos[i3] += vel[i3] * dt; pos[i3+1] += vel[i3+1] * dt; pos[i3+2] += vel[i3+2] * dt;
+    const cr = Math.min(1, dt * 3.5);
+    col[i3] += (tgtCol[i3] - col[i3]) * cr; col[i3+1] += (tgtCol[i3+1] - col[i3+1]) * cr; col[i3+2] += (tgtCol[i3+2] - col[i3+2]) * cr;
+  }
+  geo.attributes.position.needsUpdate = true;
+  geo.attributes.color.needsUpdate = true;
+  if (ownerDirty) geo.attributes.owner.needsUpdate = true;
+
+  for (let i = 0; i < RAIN; i++) {
+    rainPos[i*3+1] -= rainSpd[i] * dt;
+    if (rainPos[i*3+1] < -4.2) rainPos[i*3+1] = CEIL_Y - 0.05;
+  }
+  rainGeo.attributes.position.needsUpdate = true;
+  strandMat.opacity = 0.3 + 0.08 * Math.sin(clock * 1.7) + 0.04 * Math.sin(clock * 5.3);
+  for (const s of mist) { s.position.x = s.userData.x0 + Math.sin(clock * s.userData.sp + s.userData.ph) * 1.5; s.material.rotation += 0.0006; }
+
+  controls.update();
+  composer.render();
+  updateLeader();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+// tell the gate the scene is ready once the first frame has drawn
+requestAnimationFrame(() => requestAnimationFrame(() => window.labGate ? window.labGate.ready(enterLab) : enterLab()));
+
+addEventListener("resize", () => {
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight);
+  bloom.setSize(innerWidth, innerHeight);
+});
+</script>

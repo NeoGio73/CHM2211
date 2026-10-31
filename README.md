@@ -10,6 +10,7 @@ Virtual labs for a college-level Organic Chemistry II course. Everything runs in
 | --- | --- | --- |
 | Structure from spectra (NMR, IR, mass spectrometry) | [Exam 1 Unknown](https://neogio73.github.io/CHM2211/exam1-unknown/) | Virtual lab |
 | Grignard synthesis of triphenylmethanol | [Grignard Prelab](https://neogio73.github.io/CHM2211/grignard-prelab/) | Prelab (preview, being built) |
+| Functional groups (OpenStax *Organic Chemistry*, Table 3.1) | [Molecule Lab](https://neogio73.github.io/CHM2211/molecule-lab/) | 3D study tool |
 
 ## Exam 1 Unknown
 
