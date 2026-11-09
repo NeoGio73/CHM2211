@@ -755,6 +755,13 @@ canvas.chart { display: block; width: 100%; height: auto; cursor: crosshair; tou
 .ir-posted ul { margin: 0; padding-left: 1.2em; }
 @media (max-width: 560px) { .ir-diagnostics { grid-template-columns: 1fr; } }
 
+/* ---- Bruker's command names beside the buttons, the dataset row, the wobble curve (Part 5) ---- */
+code.cmd { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 0.78em; font-weight: 500; padding: 0 4px; margin-left: 4px; border-radius: 3px; background: rgba(23, 33, 30, 0.08); color: inherit; }
+.primary-button code.cmd { background: rgba(255, 255, 255, 0.18); }
+.dataset-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+#ds-name { max-width: 14em; }
+#wobble-canvas { background: #0d1a14; }
+
 @media print {
   .ir-diagnostics, .ir-posted, .ir-library, .ir-progress { display: none !important; }
   .gc-software { display: none !important; }

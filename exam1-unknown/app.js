@@ -50,8 +50,8 @@
       name: '',
       dou: '',
       sample: null,                 // the sample as the 3D room last reported it
-      spectro: { locked: false, solvent: '', shims: null },
-      acq: { experiment: '1H', scans: 16, gain: 32 },
+      spectro: { locked: false, solvent: '', shims: null, tuned: false, prosol: false },
+      acq: { experiment: '1H', scans: 16, gain: 32, name: '', expno: 1 },
       data: {},                     // experiment -> what was recorded and how it is processed
       tab: 'lock',
       dataset: null,
@@ -136,7 +136,9 @@
       intro: params.get('intro') !== '0' && !calm && !workUnderWay(),
       calm: calm,
       view: state.routine !== 'nmr' ? ROUTINE_VIEW[state.routine] : (workUnderWay() ? 'prep' : ''),
-      software: !!state.software
+      software: !!state.software,
+      tuned: !!state.spectro.tuned,
+      prosol: !!state.spectro.prosol
     }));
   }
 
@@ -204,6 +206,7 @@
     var column = s.tubeMl > 0 ? s.tubeMl / (Math.PI * 0.21 * 0.21) : 0;
     put('solvent', s.addedMl > 0 ? s.addedMl.toFixed(1) + ' mL' : '', s.addedMl >= 0.55);
     put('dissolved', s.dissolved ? 'Dissolved' : (s.addedMl > 0 && solid ? 'Some solid left' : ''), !!s.dissolved);
+    put('plug', s.tubeMl > 0 ? (s.filtered ? 'Filtered' : 'Not filtered') : (s.pipetPlug ? 'Plugged' : ''), (s.tubeMl > 0 && s.filtered) || !!s.pipetPlug);
     put('tube', column > 0 ? column.toFixed(1) + ' cm of solution' : '', column > 0);
     put('capped', s.capped ? 'Capped' : '', !!s.capped);
     put('spinner', s.inSpinner ? 'In the spinner' : '', !!s.inSpinner);
@@ -306,6 +309,8 @@
           // already in the hand: picking it up again would put it down
           if (step === 'take syringe') return s.held !== 'syringe' && s.held !== 'syringefull';
           if (step === 'take irvial') return s.held !== 'irdrop';
+          if (step === 'take pipet') return s.held !== 'pipet' && s.held !== 'solution';
+          if (step === 'plug') return !s.pipetPlug;
           if (step === 'take gcunknown') return s.held !== 'gcdrop';
           if (step === 'take dcm') return s.held !== 'dcm';
           return true;
@@ -381,7 +386,7 @@
 
   // ---- The spectrometer: tabs --------------------------------------------------------------------------
 
-  var TABS = ['lock', 'shim', 'acquire', 'process'];
+  var TABS = ['lock', 'tune', 'shim', 'acquire', 'process'];
   function showTab(tab) {
     state.tab = tab;
     TABS.forEach(function (t) {
@@ -391,7 +396,70 @@
     $('lock-area').hidden = !(tab === 'lock' || tab === 'shim');
     sendBench('WatchLock', tab === 'lock' || tab === 'shim' ? '1' : '0');
     if (tab === 'process') { buildDatasets(); drawSpectrum(); }
+    if (tab === 'tune') drawWobble();
     saveState();
+  }
+
+  // ---- Tune and match (atma), TopShim, Prosol: his spec's Part 5, after Bruker's Beginners Guide ----
+
+  var wobble = null;        // { started, ms, off } while the tune runs
+  function drawWobble() {
+    var c = $('wobble-canvas');
+    if (!c || $('panel-tune').hidden) return;
+    var s = surface(c, 0.24, 160), g = s.g, W = s.W, H = s.H, dpr = s.dpr;
+    var x0 = 20 * dpr, x1 = W - 20 * dpr, y0 = 14 * dpr, y1 = H - 20 * dpr, mid = (x0 + x1) / 2;
+    g.fillStyle = '#0d1a14'; g.fillRect(0, 0, W, H);
+    g.strokeStyle = 'rgba(120, 200, 150, 0.35)'; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(mid, y0); g.lineTo(mid, y1); g.stroke();
+    g.beginPath(); g.moveTo(x0, y1); g.lineTo(x1, y1); g.stroke();
+    // the dip: off to one side and shallow until tuned, on the middle line and down to the baseline once tuned
+    var f, off;
+    if (wobble) { f = Math.min(1, (Date.now() - wobble.started) / wobble.ms); off = wobble.off; }
+    else { f = state.spectro.tuned && inMagnet() ? 1 : 0; off = wobbleOff(); }
+    var e = f * f * (3 - 2 * f), centre = mid + off * (1 - e) * (x1 - x0) * 0.32, depth = 0.38 + 0.62 * e, width = (x1 - x0) * (0.07 + 0.05 * (1 - e));
+    g.strokeStyle = inMagnet() ? '#6dff9c' : 'rgba(109, 255, 156, 0.35)'; g.lineWidth = Math.max(1.5, dpr * 1.5); g.beginPath();
+    for (var x = x0; x <= x1; x += 2) {
+      var u = (x - centre) / width, y = y0 + 6 * dpr + (y1 - y0 - 6 * dpr) * depth / (1 + u * u);
+      if (!inMagnet()) y = y0 + 6 * dpr;
+      if (x === x0) g.moveTo(x, y); else g.lineTo(x, y);
+    }
+    g.stroke();
+  }
+  function wobbleOff() { var n = 0; for (var i = 0; i < state.code.length; i++) n = (n * 31 + state.code.charCodeAt(i)) % 97; return (n % 11 - 5) / 5 || 0.6; }
+  function showTune() {
+    var t = !!state.spectro.tuned && inMagnet();
+    $('tune-state').textContent = wobble ? 'Tuning…' : (t ? 'Tuned and matched' : (inMagnet() ? 'Not tuned yet' : 'No sample in the magnet'));
+    $('tune-button').disabled = !!wobble;
+    $('prosol-state').textContent = state.spectro.prosol && inMagnet() ? 'Loaded' : 'Not loaded yet';
+    drawWobble();
+  }
+  function bindProbe() {
+    $('tune-button').addEventListener('click', function () {
+      if (!inMagnet()) { $('tune-panel-msg').textContent = 'Put your sample in the magnet first (part 1).'; return; }
+      sendBench('Tune', '');
+    });
+    $('topshim-button').addEventListener('click', function () {
+      if (!inMagnet()) { $('shim-msg').textContent = 'Put your sample in the magnet first (part 1).'; return; }
+      sendBench('TopShim', '');
+    });
+    $('prosol-button').addEventListener('click', function () {
+      if (!inMagnet()) { $('acquire-msg').textContent = 'Put your sample in the magnet first (part 1).'; return; }
+      sendBench('Prosol', '');
+    });
+    $('ds-name').value = state.acq.name || '';
+    $('ds-name').addEventListener('input', function () { state.acq.name = $('ds-name').value.trim(); saveState(); });
+    showTune();
+  }
+  function receiveTuning(msg) {
+    wobble = { started: Date.now(), ms: (msg.seconds || 10) * 1000, off: typeof msg.off === 'number' ? msg.off : wobbleOff() };
+    $('tune-panel-msg').textContent = 'atma: the probe is being tuned and matched to your sample…';
+    showTune();
+    (function frame() { if (!wobble) return; drawWobble(); requestAnimationFrame(frame); })();
+  }
+  function receiveTuned(msg) {
+    wobble = null;
+    $('tune-panel-msg').textContent = msg.ok ? 'Tuned and matched: the dip sits on the middle line and touches the baseline. Shim next (Shim tab).' : 'The tune stopped: the sample left the magnet.';
+    showTune();
   }
 
   function inMagnet() { return !!(state.sample && state.sample.place === 'magnet'); }
@@ -400,6 +468,7 @@
     var parts = [];
     parts.push(inMagnet() ? 'Sample in the magnet' : 'No sample in the magnet');
     parts.push(state.spectro.locked ? 'Locked on ' + state.spectro.solvent : 'Not locked');
+    if (inMagnet()) parts.push(state.spectro.tuned ? 'Tuned' : 'Not tuned');
     if (acquiring) parts.push('Recording');
     $('console-status').textContent = parts.join(' · ');
   }
@@ -564,10 +633,11 @@
     });
     $('acquire-start').addEventListener('click', startRecording);
     $('acquire-stop').addEventListener('click', function () { sendBench('StopAcquisition', ''); });
-    chooseExperiment(state.acq.experiment);
+    chooseExperiment(state.acq.experiment, true);
   }
 
-  function chooseExperiment(key) {
+  function chooseExperiment(key, keepScans) {
+    if (!keepScans && key !== state.acq.experiment) state.acq.scans = expInfo(key).scans;
     state.acq.experiment = key;
     Array.prototype.forEach.call(document.querySelectorAll('.exp-button'), function (b) {
       b.setAttribute('aria-checked', b.getAttribute('data-exp') === key ? 'true' : 'false');
@@ -578,6 +648,8 @@
 
   function showAcquire() {
     $('scans').value = String(state.acq.scans);
+    $('ds-parset').textContent = expInfo(state.acq.experiment).parset || 'PROTON';
+    $('ds-expno').textContent = String(state.acq.expno || 1);
     $('gain').value = state.acq.gain;
     var per = state.acq.experiment === '1H' ? 4.0 : 1.6;
     if (!acquiring) $('acq-text').textContent = 'About ' + formatTime(per * state.acq.scans) + ' on a real spectrometer';
@@ -592,12 +664,17 @@
 
   function startRecording() {
     if (!inMagnet()) { $('acquire-msg').textContent = 'Put your sample in the magnet first (part 1).'; return; }
+    var name = ($('ds-name').value || '').trim();
+    if (!M.gcNameOk(name)) { $('acquire-msg').textContent = 'Create the dataset first: give it a name (letters, figures, - _ and ., no spaces).'; return; }
+    state.acq.name = name;
     var msg = state.spectro.locked ? '' : 'The spectrometer is not locked: the field will drift and the lines will broaden. Lock first (Lock tab) for a good spectrum. ';
+    if (!state.spectro.tuned) msg += 'The probe is not tuned: the signal will be weaker (about a third less for ¹H; ¹³C would need twice the scans for the same noise). Tune it (Tune tab). ';
     var seed = Math.floor(Math.random() * 2147483647);
     acquiringId = state.nextId++;
-    pending[acquiringId] = { experiment: state.acq.experiment, scans: state.acq.scans, gain: state.acq.gain, seed: seed, shims: shims().slice(), locked: !!state.spectro.locked };
+    pending[acquiringId] = { experiment: state.acq.experiment, scans: state.acq.scans, gain: state.acq.gain, seed: seed, shims: shims().slice(), locked: !!state.spectro.locked,
+      dataset: name + ' ' + (state.acq.expno || 1) + ' (' + (expInfo(state.acq.experiment).parset || 'PROTON') + ')' };
+    $('acquire-msg').textContent = msg;      // before the room answers: a refusal (no Prosol, say) replaces it
     sendBench('Acquire', JSON.stringify({ experiment: state.acq.experiment, scans: state.acq.scans, gain: state.acq.gain, seed: seed, id: acquiringId }));
-    $('acquire-msg').textContent = msg;
     saveState();
   }
 
@@ -619,9 +696,13 @@
     delete cache[exp];
     if (ask) {
       // a new recording replaces the old one of the same kind
-      state.data[exp] = { seed: ask.seed, scans: fid.scans, gain: fid.gain, shims: ask.shims, locked: ask.locked, id: msg.id, overflow: fid.overflow, proc: defaultProc(exp), view: null };
+      state.data[exp] = { seed: ask.seed, scans: fid.scans, gain: fid.gain, shims: ask.shims, locked: ask.locked, id: msg.id, overflow: fid.overflow, proc: defaultProc(exp), view: null,
+        tuned: msg.tuned !== false, filtered: msg.filtered !== false, dataset: ask.dataset };
       state.dataset = exp;
-      var text = 'Recorded: ' + expInfo(exp).name + ', ' + fid.scans + (fid.scans === 1 ? ' scan' : ' scans') + '.';
+      state.acq.expno = (state.acq.expno || 1) + 1;
+      var text = 'Recorded: ' + expInfo(exp).name + ', ' + fid.scans + (fid.scans === 1 ? ' scan' : ' scans') + ', dataset ' + ask.dataset + '.';
+      if (msg.tuned === false) text += ' The probe was not tuned, so this spectrum is weaker than it could be.';
+      if (msg.filtered === false) text += ' Your solution went into the tube unfiltered: dust and fibres broaden every line, and no shimming takes that away. Make up a new tube through a tissue plug for sharper lines.';
       if (fid.overflow) text = 'The receiver gain was too high: the FID was clipped (the digitizer overflowed). Lower the gain, or use Automatic gain, and record again. ' + text;
       $('acquire-msg').textContent = text;
       showTab('process');
@@ -638,7 +719,8 @@
       var d = state.data[exp];
       if (!d || fids[exp]) return;
       var after = /-D2O$/.test(exp);
-      sendBench('Acquire', JSON.stringify({ experiment: exp.replace('-D2O', ''), scans: d.scans, gain: d.gain, seed: d.seed, id: d.id, instant: true, shims: d.shims || [], locked: !!d.locked, d2o: after, shaken: after }));
+      sendBench('Acquire', JSON.stringify({ experiment: exp.replace('-D2O', ''), scans: d.scans, gain: d.gain, seed: d.seed, id: d.id, instant: true, shims: d.shims || [], locked: !!d.locked, d2o: after, shaken: after,
+        tuned: d.tuned !== false, filtered: d.filtered !== false }));
     });
   }
 
@@ -2011,7 +2093,7 @@
     M.EXPERIMENTS.forEach(function (e) {
       var d = state.data[e.key];
       if (!d) return;
-      figure(NMR_CAPTIONS[e.key] + ', ' + d.scans + (d.scans === 1 ? ' scan.' : ' scans.'), function (c) { renderNmr(c, e.key, true); });
+      figure(NMR_CAPTIONS[e.key] + ', ' + d.scans + (d.scans === 1 ? ' scan' : ' scans') + (d.dataset ? ', dataset ' + d.dataset : '') + (d.tuned === false ? ', probe not tuned' : '') + (d.filtered === false ? ', solution not filtered' : '') + '.', function (c) { renderNmr(c, e.key, true); });
     });
     if (state.ir) figure('IR (diamond ATR), the pure compound' + (state.ir.sample ? '' : ': nothing on the crystal') + (state.ir.background ? '' : ', with no background recorded')
       + (state.ir.grease === 'dirty' ? ', on a crystal that was not cleaned (silicone grease in the spectrum)' : (state.ir.grease === 'negative' ? ', with a background taken on a dirty crystal (negative bands)' : (state.ir.scans ? ', taken on a clean crystal' : '')))
@@ -2128,6 +2210,8 @@
         if (msg.formula) formula = msg.formula;
         solid = !!msg.solid;
         state.spectro.locked = !!msg.locked;
+        state.spectro.tuned = !!msg.tuned;
+        state.spectro.prosol = !!msg.prosol;
         state.spectro.solvent = msg.solvent || '';
         if (msg.shims && msg.shims.length === 4) state.spectro.shims = msg.shims;
         lockShown.locked = !!msg.locked;
@@ -2149,6 +2233,7 @@
         updateNote();
         consoleStatus();
         if (msg.state && msg.state.irWarm) { irWarmShown = { warm: true, left: 0 }; }
+        showTune();
         showIrDiagnostics();
         saveState();
         break;
@@ -2163,8 +2248,8 @@
       case 'blocked':
         blockedSeen = true;
         note(M.reasonText(msg.reason), 'warn');
-        if (msg.what === 'lock' || msg.what === 'gain' || msg.what === 'acquire') {
-          var where = msg.what === 'lock' ? 'lock-msg' : 'acquire-msg';
+        if (msg.what === 'lock' || msg.what === 'gain' || msg.what === 'acquire' || msg.what === 'tune' || msg.what === 'shim' || msg.what === 'prosol') {
+          var where = { lock: 'lock-msg', tune: 'tune-panel-msg', shim: 'shim-msg' }[msg.what] || 'acquire-msg';
           $(where).textContent = M.reasonText(msg.reason);
         } else flagStep(msg.reason);
         break;
@@ -2199,10 +2284,23 @@
         $('acquire-msg').textContent = 'Receiver gain set to ' + msg.gain + '.';
         saveState();
         break;
+      case 'tuning':
+        receiveTuning(msg);
+        break;
+      case 'tuned':
+        receiveTuned(msg);
+        break;
+      case 'topshim':
+        $('shim-msg').textContent = msg.done ? (msg.ok ? 'TopShim finished: Z1 and Z2 are set. X and Y are as you left them; turn them by hand if the lock level can go higher.' : 'TopShim stopped: the sample left the magnet.') : 'TopShim is shimming on the lock signal…';
+        break;
+      case 'prosol':
+        $('acquire-msg').textContent = 'getprosol: the probe’s pulse widths and power levels are loaded.';
+        showTune();
+        break;
       case 'acquiring':
         acquiring = msg.done < msg.of;
         $('acq-fill').style.width = Math.round(100 * msg.done / Math.max(1, msg.of)) + '%';
-        $('acq-text').textContent = 'Scan ' + Math.min(msg.done + 1, msg.of) + ' of ' + msg.of;
+        $('acq-text').textContent = msg.dummy > 0 ? 'Dummy scans: ' + msg.dummy + ' to go (they settle the spins and are not kept)' : 'Scan ' + Math.min(msg.done + 1, msg.of) + ' of ' + msg.of;
         showAcquire();
         consoleStatus();
         break;
@@ -2383,6 +2481,7 @@
   bindSoftware();
   buildShims();
   bindAcquire();
+  bindProbe();
   bindProcess();
   bindReadings();
   if (!state.readings || typeof state.readings !== 'object') state.readings = {};

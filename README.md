@@ -18,9 +18,9 @@ Each student is given an unknown compound, by a five-character code at the top o
 
 | Part | What the student does |
 | --- | --- |
-| 1. At the bench | Makes up an NMR sample in CDCl₃, sets its depth in the spinner and lowers it into the magnet; records an IR spectrum on an ATR crystal; makes up a GC vial and injects it by hand into a GC-MS |
+| 1. At the bench | Makes up an NMR sample in CDCl₃, filters it into the tube through a tissue plug, sets its depth in the spinner and lowers it into the magnet; records an IR spectrum on an ATR crystal; makes up a GC vial and injects it by hand into a GC-MS |
 | 2. The formula | Works out the degrees of unsaturation from the molecular formula |
-| 3. The spectrometer | Locks, shims, records ¹H, ¹³C and DEPT-135 spectra, then processes them: Fourier transform, phase, baseline, reference, peak picking and integration |
+| 3. The spectrometer | Follows Bruker's routine (AVANCE NEO Beginners Guide): locks, tunes and matches the probe, shims (TopShim, then by hand), names the dataset, loads the pulse settings, records ¹H, ¹³C and DEPT-135 spectra, then processes them: Fourier transform, phase, baseline, reference, peak picking and integration |
 | 4. What the spectra show | Reads every ¹H and ¹³C signal into tables, which the page checks |
 | 5. The IR spectrum | Chooses the scans and resolution, records a background and the spectrum on a diamond ATR (the crystal must first be wiped of the last user's silicone grease; some students find the IR still testing itself), then reads the important bands |
 | 6. The GC-MS | Runs the instrument's software: checks its status, runs the EI Check (some students meet a vented, leaking or wet instrument), sets and saves the method, sets up the run and presses Start on the GC. Then reads the retention time, the molecular ion, the base peak and the main fragments |

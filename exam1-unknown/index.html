@@ -65,9 +65,14 @@
             <span class="routine-buttons"><button type="button" class="quiet-button" data-steps="swirl">Swirl the vial</button></span>
             <span class="routine-state" id="state-dissolved"></span>
           </li>
+          <li class="routine-step" data-done="plug">
+            <span class="routine-name">A filter pipet <span class="soft">(a small plug of lens tissue pushed into a clean pipet: it holds back dust and fibres)</span></span>
+            <span class="routine-buttons"><button type="button" class="quiet-button" data-steps="take pipet|plug">Plug a clean pipet</button></span>
+            <span class="routine-state" id="state-plug"></span>
+          </li>
           <li class="routine-step" data-done="tube">
-            <span class="routine-name">Into an NMR tube</span>
-            <span class="routine-buttons"><button type="button" class="quiet-button" data-steps="take pipet|use vial|use tube">Fill a tube with a clean pipet</button></span>
+            <span class="routine-name">Into an NMR tube, through the plug <span class="soft">(0.6 mL stands about 4.3 cm high)</span></span>
+            <span class="routine-buttons"><button type="button" class="quiet-button" data-steps="take pipet|use vial|use tube">Fill the tube</button></span>
             <span class="routine-state" id="state-tube"></span>
           </li>
           <li class="routine-step" data-done="capped">
@@ -94,7 +99,7 @@
             <span class="routine-state" id="state-depth"></span>
           </li>
           <li class="routine-step" data-done="air">
-            <span class="routine-name">Lift air at the magnet</span>
+            <span class="routine-name">Lift air at the magnet <span class="soft">(the software's <code>ej</code> turns it on, <code>ij</code> lets the sample down)</span></span>
             <span class="routine-buttons"><button type="button" class="quiet-button toggle" id="air-button" aria-pressed="false">LIFT</button></span>
             <span class="routine-state" id="state-air"></span>
           </li>
@@ -232,11 +237,12 @@
 
   <section class="part" id="part-spectrometer" aria-labelledby="spectrometer-title">
     <h2 id="spectrometer-title"><span class="step" aria-hidden="true">3</span>The spectrometer</h2>
-    <p class="lede">This is the spectrometer's software, as on the computer beside the magnet. Lock on the solvent's deuterium, shim until the lock level is as high as you can get it, record your spectra, then process them: Fourier transform, phase, baseline, reference, and pick peaks and integrate. The <a href="guide/how-to-run-the-nmr.pdf" target="_blank" rel="noopener">guide to running the NMR</a> takes you through each step.</p>
+    <p class="lede">This is the spectrometer's software, as on the computer beside the magnet. Lock on the solvent's deuterium, tune the probe, shim until the lock level is as high as you can get it, load the pulse settings and record your spectra, then process them: Fourier transform, phase, baseline, reference, and pick peaks and integrate. The <a href="guide/how-to-run-the-nmr.pdf" target="_blank" rel="noopener">guide to running the NMR</a> takes you through each step.</p>
 
     <div class="console" id="console">
       <div class="tabs" role="tablist" aria-label="Spectrometer">
         <button type="button" role="tab" class="tab" id="tab-lock" aria-controls="panel-lock" aria-selected="true">Lock</button>
+        <button type="button" role="tab" class="tab" id="tab-tune" aria-controls="panel-tune" aria-selected="false">Tune</button>
         <button type="button" role="tab" class="tab" id="tab-shim" aria-controls="panel-shim" aria-selected="false">Shim</button>
         <button type="button" role="tab" class="tab" id="tab-acquire" aria-controls="panel-acquire" aria-selected="false">Acquire</button>
         <button type="button" role="tab" class="tab" id="tab-process" aria-controls="panel-process" aria-selected="false">Process</button>
@@ -254,14 +260,29 @@
         <div class="panel-row">
           <label class="field-name" for="lock-solvent">Solvent</label>
           <select id="lock-solvent"></select>
-          <button type="button" class="primary-button" id="lock-button">Lock</button>
+          <button type="button" class="primary-button" id="lock-button">Lock <code class="cmd">lock</code></button>
           <button type="button" class="quiet-button" id="unlock-button">Lock off</button>
         </div>
+        <p class="panel-intro">Spin: off. Spinning the sample is optional and is not used with this probe.</p>
         <p class="panel-msg" id="lock-msg" role="status"></p>
       </div>
 
+      <div class="tab-panel" role="tabpanel" id="panel-tune" aria-labelledby="tab-tune" hidden>
+        <p class="panel-intro">Tune and match the probe to your sample, so that it takes in as much of the radio signal as it can. The wobble curve shows the probe's response: tuned, its dip sits on the middle line and reaches down to the baseline.</p>
+        <div class="panel-row">
+          <button type="button" class="primary-button" id="tune-button">Tune and match <code class="cmd">atma</code></button>
+          <span class="soft" id="tune-state"></span>
+        </div>
+        <div class="spectrum-wrap"><canvas id="wobble-canvas" class="chart" width="900" height="220" aria-label="The wobble curve: the probe's response"></canvas></div>
+        <p class="panel-msg" id="tune-panel-msg" role="status"></p>
+      </div>
+
       <div class="tab-panel" role="tabpanel" id="panel-shim" aria-labelledby="tab-shim" hidden>
-        <p class="panel-intro">Turn each shim until the lock level stops rising, then go round again: they affect each other. Z1 and Z2 matter most.</p>
+        <div class="panel-row">
+          <button type="button" class="primary-button" id="topshim-button">TopShim <code class="cmd">topshim</code></button>
+          <span class="soft">The automatic shim sets the Z shims for you (it needs the lock).</span>
+        </div>
+        <p class="panel-intro">Or shim by hand: turn each shim until the lock level stops rising, then go round again, since they affect each other. Z1 and Z2 matter most; X and Y are left to you either way.</p>
         <div class="shims" id="shims"></div>
         <p class="panel-msg" id="shim-msg" role="status"></p>
       </div>
@@ -271,6 +292,15 @@
           <span class="field-name">Experiment</span>
           <span class="experiments" id="experiments" role="radiogroup" aria-label="Experiment"></span>
         </div>
+        <div class="panel-row dataset-row">
+          <label class="field-name" for="ds-name">Dataset name</label>
+          <input type="text" id="ds-name" autocomplete="off" placeholder="no spaces">
+          <span class="soft">EXPNO <span id="ds-expno">1</span> · parameter set <code id="ds-parset">PROTON</code></span>
+        </div>
+        <div class="panel-row">
+          <button type="button" class="quiet-button" id="prosol-button">Load pulse widths and powers <code class="cmd">getprosol</code></button>
+          <span class="soft" id="prosol-state"></span>
+        </div>
         <div class="panel-row">
           <label class="field-name" for="scans">Scans</label>
           <select id="scans"></select>
@@ -279,7 +309,7 @@
           <button type="button" class="quiet-button" id="auto-gain">Automatic gain</button>
         </div>
         <div class="panel-row">
-          <button type="button" class="primary-button" id="acquire-start">Record</button>
+          <button type="button" class="primary-button" id="acquire-start">Record <code class="cmd">zg</code></button>
           <button type="button" class="quiet-button" id="acquire-stop" disabled>Stop</button>
           <div class="acq-progress" aria-hidden="true"><div class="acq-fill" id="acq-fill"></div></div>
           <span class="acq-text" id="acq-text"></span>
@@ -291,19 +321,19 @@
         <div class="panel-row datasets" id="datasets" role="group" aria-label="Spectrum"></div>
         <div class="toolbar" id="toolbar">
           <div class="tool-group">
-            <button type="button" class="quiet-button" id="do-ft">Fourier transform</button>
-            <label class="small-field">LB <input type="number" id="lb" step="0.1" min="0" max="10" value="0.3"> Hz</label>
+            <button type="button" class="quiet-button" id="do-ft">Fourier transform <code class="cmd">ft</code></button>
+            <label class="small-field">LB <code class="cmd">em</code> <input type="number" id="lb" step="0.1" min="0" max="10" value="0.3"> Hz</label>
           </div>
           <div class="tool-group">
-            <button type="button" class="quiet-button" id="do-autophase">Automatic phase</button>
+            <button type="button" class="quiet-button" id="do-autophase">Automatic phase <code class="cmd">apk</code></button>
             <label class="small-field">ph0 <input type="range" id="ph0" min="-180" max="180" step="0.5" value="0"> <input type="number" id="ph0-num" step="0.5" value="0"></label>
             <label class="small-field">ph1 <input type="range" id="ph1" min="-180" max="180" step="0.5" value="0"> <input type="number" id="ph1-num" step="0.5" value="0"></label>
           </div>
           <div class="tool-group">
-            <button type="button" class="quiet-button toggle" id="do-baseline" aria-pressed="false">Baseline correction</button>
+            <button type="button" class="quiet-button toggle" id="do-baseline" aria-pressed="false">Baseline correction <code class="cmd">absn</code></button>
           </div>
           <div class="tool-group">
-            <label class="small-field">Reference <select id="ref-line"></select></label>
+            <label class="small-field">Reference <code class="cmd">sref</code> <select id="ref-line"></select></label>
             <button type="button" class="quiet-button toggle" id="mode-ref" aria-pressed="false">Click its peak</button>
           </div>
           <div class="tool-group">
@@ -311,7 +341,7 @@
             <button type="button" class="quiet-button" id="clear-int">Clear integrals</button>
           </div>
           <div class="tool-group">
-            <button type="button" class="quiet-button toggle" id="do-peaks" aria-pressed="false">Pick peaks</button>
+            <button type="button" class="quiet-button toggle" id="do-peaks" aria-pressed="false">Pick peaks <code class="cmd">pp</code></button>
             <label class="small-field">above <input type="range" id="threshold" min="1" max="60" step="1" value="8"> %</label>
           </div>
           <div class="tool-group">

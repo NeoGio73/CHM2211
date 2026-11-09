@@ -167,7 +167,13 @@
     'gc-tuning': 'The EI Check is still running.',
     'gc-nothing-to-wait-for': 'The pumps have nothing to wait for: the vacuum is good.',
     'gc-nut-tight': 'The column nut is already tight.',
-    'no-unknown': 'The room is still setting up your unknown.'
+    'no-unknown': 'The room is still setting up your unknown.',
+    'plug-first': 'The pipet already holds solution. Plug a clean pipet before you draw the solution up: put this one back first.',
+    'plug-needs-pipet': 'Take a clean Pasteur pipet from the beaker first, then push a little lens tissue into it.',
+    'already-plugged': 'This pipet already has its plug.',
+    'prosol-first': 'Load the pulse widths and powers first (getprosol, in the Acquire tab).',
+    'topshim-needs-lock': 'TopShim works on the lock signal: lock first (Lock tab).',
+    'tuning': 'The probe is still being tuned.'
   };
   function reasonText(code) { return REASONS[code] || 'That cannot be done just now.'; }
 
@@ -196,7 +202,8 @@
     gcunknown: 'Your unknown, for the GC vial',
     dcm: 'Dichloromethane (CH₂Cl₂): click to fill a pipet',
     gcnut: 'The column nut, where the GC column enters the mass spectrometer',
-    gcstart: 'Start, on the GC’s keypad'
+    gcstart: 'Start, on the GC’s keypad',
+    tissues: 'Lens tissue: with a clean pipet in hand, click to push a small plug of it into the pipet, to filter your solution'
   };
 
   // ---- Checking the readings: plain words for the 3D lab's verdicts -----------------------------
@@ -274,7 +281,7 @@
     if (focus === 'ms') return msStep(s, info);
     if (s.held === 'solvent') return 'You have a pipet of CDCl₃. Click the vial to empty it in.';
     if (s.held === 'd2o') return 'You have a drop of D₂O. Click your uncapped tube to add it.';
-    if (s.held === 'pipet') return 'Click the vial to draw up the solution.';
+    if (s.held === 'pipet') return s.pipetPlug ? 'Click the vial to draw up the solution: it will run through the plug into the tube.' : 'Push a little plug of lens tissue into the pipet first (click the box of lens tissue), so the solution is filtered; then click the vial.';
     if (s.held === 'solution') return 'Click an NMR tube in the rack to empty the pipet into it.';
     if (s.held === 'cap') return 'Click the tube to cap it.';
     if (s.held === 'tube') return 'Click the spinner on its holder to push the tube into it.';
@@ -282,7 +289,7 @@
     if (s.addedMl <= 0) return 'Start by dissolving the unknown in about 0.6 mL of CDCl₃: click the CDCl₃ bottle, then the vial.';
     if (s.addedMl < 0.55 && s.tubeMl <= 0) return 'Add another pipetful of CDCl₃: about 0.6 mL in all.';
     if (!s.dissolved && s.tubeMl <= 0) return 'Swirl the vial (click it) until the unknown dissolves.';
-    if (s.tubeMl <= 0) return 'Take a clean Pasteur pipet from the beaker and move the solution into an NMR tube.';
+    if (s.tubeMl <= 0) return 'Take a clean Pasteur pipet from the beaker, push a little plug of lens tissue into it, and move the solution through it into an NMR tube.';
     if (!s.capped) return 'Cap the tube: a cap from the dish.';
     if (!s.inSpinner) return 'Put the capped tube in the spinner on its holder.';
     if (s.place === 'holder' && !s.gauged) return 'Set the depth: put the spinner on the depth gauge.';
@@ -317,14 +324,15 @@
     switch (s.held) {
       case 'solvent': return 'solvent';
       case 'd2o': return 'd2o';
-      case 'pipet': case 'solution': return 'tube';
+      case 'pipet': return s.pipetPlug ? 'tube' : 'plug';
+      case 'solution': return 'tube';
       case 'cap': return s.d2o ? 'd2o' : 'capped';
       case 'tube': return 'spinner';
       case 'spinner': return s.air ? 'magnet' : 'air';
     }
     if (s.addedMl < 0.55 && s.tubeMl <= 0) return 'solvent';
     if (!s.dissolved && s.tubeMl <= 0) return 'dissolved';
-    if (s.tubeMl <= 0) return 'tube';
+    if (s.tubeMl <= 0) return 'plug';
     if (s.d2o && s.place === 'rack' && (!s.capped || !s.shaken)) return 'd2o';
     if (!s.capped) return 'capped';
     if (!s.inSpinner) return 'spinner';
@@ -800,9 +808,9 @@
     { key: 'C6D6', name: 'C₆D₆ (benzene-d₆)' }
   ];
   var EXPERIMENTS = [
-    { key: '1H', name: '¹H', lb: 0.3, scans: 16, from: 12, to: -0.5 },
-    { key: '13C', name: '¹³C', lb: 1.0, scans: 256, from: 220, to: -5 },
-    { key: 'DEPT135', name: 'DEPT-135', lb: 1.0, scans: 256, from: 220, to: -5 },
+    { key: '1H', name: '¹H', lb: 0.3, scans: 16, from: 12, to: -0.5, parset: 'PROTON' },
+    { key: '13C', name: '¹³C', lb: 1.0, scans: 128, from: 220, to: -5, parset: 'C13CPD' },
+    { key: 'DEPT135', name: 'DEPT-135', lb: 1.0, scans: 128, from: 220, to: -5, parset: 'DEPT135' },
     // the proton spectrum again after the D2O shake: kept apart so the two can be compared
     { key: '1H-D2O', name: '¹H after D₂O', lb: 0.3, scans: 16, from: 12, to: -0.5, recorded: true }
   ];
